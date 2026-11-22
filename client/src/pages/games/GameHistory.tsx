@@ -11,7 +11,7 @@ import { Empty, Loader, Page, SectionTitle } from '@/components/ui';
 const STATUS: Record<SessionStatus, [string, string]> = {
   completed: ['Terminée', 'bg-emerald-100 text-emerald-700'],
   in_progress: ['En cours', 'bg-blush-100 text-wine-600'],
-  interrupted: ['Interrompue', 'bg-ink/5 text-ink/50'],
+  interrupted: ['Interrompue', 'bg-ink/5 text-ink/70'],
 };
 
 export function GameHistory() {
@@ -36,8 +36,9 @@ export function GameHistory() {
 
   return (
     <Page>
-      <SectionTitle kicker="Historique" title="Nos parties" />
-      <div className="mb-5 flex gap-2">
+      <SectionTitle kicker="Scores" title="Historique des parties" />
+      {(!!list?.length || !!gameId || !!status) && (
+      <div className="mb-5 grid gap-2 sm:flex">
         <select value={gameId} onChange={(e) => setGameId(e.target.value as GameId | '')} className="input py-2 text-sm">
           <option value="">Tous les jeux</option>
           {GAME_IDS.map((g) => (
@@ -53,12 +54,14 @@ export function GameHistory() {
           <option value="interrupted">Interrompues</option>
         </select>
       </div>
+      )}
       {!list ? (
         <Loader />
       ) : !list.length ? (
-        <Empty icon={<History className="h-6 w-6" />} title="Aucune partie pour l’instant">
-          <Link to="/jeux" className="font-semibold text-wine-600 underline">
-            Lancer un premier jeu
+        <Empty icon={<History className="h-6 w-6" />} title={gameId || status ? 'Aucune partie avec ces filtres' : 'Aucune partie pour l’instant'}>
+          <p>Les parties terminées, en cours ou interrompues apparaîtront ici.</p>
+          <Link to="/jeux" className="btn-primary mt-4">
+            Choisir un jeu
           </Link>
         </Empty>
       ) : (
@@ -83,7 +86,7 @@ export function GameHistory() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-wine-700">{GAMES[s.gameId].title}</p>
-                      <p className="text-xs text-ink/60">
+                      <p className="text-xs text-ink/70">
                         {new Date(s.startedAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })} · {DIFFICULTY_LABELS[s.difficulty as 'easy']}
                       </p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">

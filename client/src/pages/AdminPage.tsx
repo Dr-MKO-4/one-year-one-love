@@ -1,53 +1,68 @@
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { DatabaseBackup, Gamepad2, Image, Mail, Milestone, Music } from 'lucide-react';
-import { Page, SectionTitle } from '@/components/ui';
+import { Page } from '@/components/ui';
 import { ContentAdmin } from './admin/ContentAdmin';
 import { BackupAdmin, LetterAdmin, PhotosAdmin, TimelineAdmin } from './admin/MediaAdmin';
 import { MusicAdmin } from './admin/MusicAdmin';
 
 const TABS = [
-  { id: 'jeux', label: 'Jeux', icon: Gamepad2 },
-  { id: 'photos', label: 'Photos', icon: Image },
-  { id: 'frise', label: 'Frise', icon: Milestone },
-  { id: 'lettre', label: 'Accueil & lettre', icon: Mail },
-  { id: 'musique', label: 'Musique', icon: Music },
-  { id: 'sauvegarde', label: 'Sauvegarde', icon: DatabaseBackup },
+  { id: 'jeux', label: 'Jeux', icon: Gamepad2, title: 'Contenus des jeux', intro: 'Questions, dilemmes, paires, défis et phrases de chaque jeu.' },
+  { id: 'photos', label: 'Photos', icon: Image, title: 'Photos', intro: 'Les photos servent dans la frise et dans Memory of Us.' },
+  { id: 'frise', label: 'Frise', icon: Milestone, title: 'Frise', intro: 'Seuls les moments confirmés apparaissent sur la frise.' },
+  { id: 'lettre', label: 'Lettre', icon: Mail, title: 'Lettre d’accueil', intro: 'Elle n’apparaît sur l’accueil qu’une fois publiée.' },
+  { id: 'musique', label: 'Musique', icon: Music, title: 'Playlist', intro: 'Les titres que vous écoutez ensemble.' },
+  { id: 'sauvegarde', label: 'Sauvegarde', icon: DatabaseBackup, title: 'Sauvegarde', intro: 'Garder une copie de vos contenus et de vos parties.' },
 ] as const;
+
+type TabId = (typeof TABS)[number]['id'];
 
 export default function AdminPage() {
   const [params, setParams] = useSearchParams();
-  const tab = (params.get('onglet') as (typeof TABS)[number]['id']) ?? 'jeux';
+  const tabId = (TABS.some((t) => t.id === params.get('onglet')) ? params.get('onglet') : 'jeux') as TabId;
+  const tab = TABS.find((t) => t.id === tabId)!;
+  const activeRef = useRef<HTMLButtonElement>(null);
+
+  // L'onglet actif reste visible même quand la barre défile horizontalement.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [tabId]);
 
   return (
     <Page className="max-w-4xl">
-      <SectionTitle kicker="Configuration" title="Nos contenus">
-        Questions, réponses de référence, défis, associations, photos, frise et musique : tout se modifie ici, sans toucher au code.
-      </SectionTitle>
-      <div className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-wine-600">Configuration</p>
+      <div role="tablist" aria-label="Sections de la configuration" className="-mx-4 mt-3 flex gap-1 overflow-x-auto border-b border-blush-100 px-4 sm:mx-0 sm:px-0">
         {TABS.map((t) => {
-          const active = tab === t.id;
+          const active = t.id === tabId;
           return (
             <button
               key={t.id}
+              ref={active ? activeRef : undefined}
+              role="tab"
+              aria-selected={active}
               onClick={() => setParams({ onglet: t.id })}
-              className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${active ? 'text-white' : 'bg-white/70 text-wine-700'}`}
+              className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold ${
+                active ? 'border-wine-600 text-wine-800' : 'border-transparent text-ink/70 hover:text-wine-700'
+              }`}
             >
-              {active && <motion.span layoutId="admin-tab" className="absolute inset-0 rounded-full bg-wine-gradient" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
-              <t.icon className="relative h-4 w-4" />
-              <span className="relative">{t.label}</span>
+              <t.icon className="h-4 w-4" />
+              {t.label}
             </button>
           );
         })}
       </div>
-      <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        {tab === 'jeux' && <ContentAdmin />}
-        {tab === 'photos' && <PhotosAdmin />}
-        {tab === 'frise' && <TimelineAdmin />}
-        {tab === 'lettre' && <LetterAdmin />}
-        {tab === 'musique' && <MusicAdmin />}
-        {tab === 'sauvegarde' && <BackupAdmin />}
-      </motion.div>
+      <div className="mb-5 mt-5">
+        <h1 className="text-2xl sm:text-3xl">{tab.title}</h1>
+        <p className="mt-1 text-sm text-ink/75">{tab.intro}</p>
+      </div>
+      <div role="tabpanel">
+        {tabId === 'jeux' && <ContentAdmin />}
+        {tabId === 'photos' && <PhotosAdmin />}
+        {tabId === 'frise' && <TimelineAdmin />}
+        {tabId === 'lettre' && <LetterAdmin />}
+        {tabId === 'musique' && <MusicAdmin />}
+        {tabId === 'sauvegarde' && <BackupAdmin />}
+      </div>
     </Page>
   );
 }

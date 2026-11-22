@@ -313,6 +313,8 @@ export interface GameMeta {
   tagline: string;
   objective: string;
   difficultyLabel: string;
+  /** Format concret : nombre de manches et durée indicative. */
+  format: string;
   modes: PlayMode[];
   defaultMode: PlayMode;
   scoreLabel: string;
@@ -328,6 +330,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'À quel point vous connaissez-vous ?',
     objective: 'Découvrir à quel point chacun connaît l’autre.',
     difficultyLabel: 'Progressive',
+    format: '6 à 14 questions · 10 à 20 min',
     modes: ['alternate'],
     defaultMode: 'alternate',
     scoreLabel: 'Personnel + commun',
@@ -346,6 +349,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'Vos préférences, côte à côte.',
     objective: 'Découvrir vos préférences et mesurer vos ressemblances.',
     difficultyLabel: 'Accessible',
+    format: '8 à 16 dilemmes · 5 à 10 min',
     modes: ['simultaneous'],
     defaultMode: 'simultaneous',
     scoreLabel: 'Participation + compatibilité',
@@ -363,6 +367,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'Retrouvez les paires de vos souvenirs.',
     objective: 'Retrouver les associations liées à vos souvenirs.',
     difficultyLabel: 'Progressive',
+    format: '2 plateaux de 3 à 8 paires · 5 à 10 min',
     modes: ['duo', 'solo'],
     defaultMode: 'duo',
     scoreLabel: 'Personnel + commun',
@@ -381,6 +386,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'Votre histoire, question après question.',
     objective: 'Tester votre mémoire des événements de votre relation.',
     difficultyLabel: 'Intermédiaire à difficile',
+    format: '8 à 12 questions · 10 à 15 min',
     modes: ['alternate'],
     defaultMode: 'alternate',
     scoreLabel: 'Personnel + commun',
@@ -398,6 +404,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'Petits défis, grands sourires.',
     objective: 'Transformer le jeu en petits défis amusants et romantiques.',
     difficultyLabel: 'Accessible à intermédiaire',
+    format: '6 à 10 défis · 15 à 30 min',
     modes: ['duo'],
     defaultMode: 'duo',
     scoreLabel: 'Personnel + commun',
@@ -415,6 +422,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: 'Pensez-vous la même chose ?',
     objective: 'Découvrir si vous pensez de la même manière.',
     difficultyLabel: 'Intermédiaire',
+    format: '5 à 10 phrases · 10 à 15 min',
     modes: ['simultaneous'],
     defaultMode: 'simultaneous',
     scoreLabel: 'Personnel + commun',

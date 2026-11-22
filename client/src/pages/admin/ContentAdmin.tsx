@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Eye, EyeOff, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, Eye, EyeOff, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import {
   CHALLENGE_CATEGORY_LABELS,
   DIFFICULTIES,
@@ -15,7 +15,7 @@ import {
 } from '@shared/types';
 import { api, photoUrl, type PhotoMeta } from '@/services/api';
 import { useToast } from '@/lib/toast';
-import { Btn, Loader, Modal } from '@/components/ui';
+import { Btn, Loader, Modal, RowMenu } from '@/components/ui';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Draft = { id?: string; difficulty: Difficulty; active: boolean; toConfirm: boolean; data: any };
@@ -27,6 +27,15 @@ const EMPTY: Record<GameId, () => any> = {
   'do-you-remember': () => ({ text: '', kind: 'free', choices: [], answer: '', keywords: [], allowPartial: false }),
   'love-challenges': () => ({ text: '', category: 'romantic', target: 'individual', points: 10, allowPartial: true }),
   'complete-my-sentence': () => ({ prompt: '', keywordGroups: [] }),
+};
+
+const UNIT: Record<GameId, string> = {
+  'who-knows-who': 'questions',
+  'would-you-rather': 'dilemmes',
+  'memory-of-us': 'paires',
+  'do-you-remember': 'questions',
+  'love-challenges': 'défis',
+  'complete-my-sentence': 'phrases',
 };
 
 const SIDE_LABEL: Record<MemorySide['kind'], string> = { photo: 'Photo', date: 'Date', place: 'Lieu', memory: 'Souvenir', text: 'Texte' };
@@ -59,7 +68,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
     <label className="block">
       <span className="label">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-ink/50">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-ink/70">{hint}</span>}
     </label>
   );
 }
@@ -84,7 +93,7 @@ function SideEditor({ side, onChange, photos }: { side: MemorySide; onChange: (s
             ))}
           </div>
         ) : (
-          <p className="text-xs text-ink/60">Ajoute d’abord des photos dans l’onglet Photos.</p>
+          <p className="text-xs text-ink/70">Ajoute d’abord des photos dans l’onglet Photos.</p>
         )
       ) : (
         <input className="input" value={side.value} maxLength={200} onChange={(e) => onChange({ ...side, value: e.target.value })} placeholder={SIDE_LABEL[side.kind]} />
@@ -292,6 +301,11 @@ export function ContentAdmin() {
     if (saved) setItems((l) => l!.map((i) => (i.id === it.id ? saved : i)));
   };
 
+  const confirmItem = async (it: ContentItem) => {
+    const saved = await api.updateContent(it.id, { toConfirm: false }).catch((e) => toast(e.message, 'error'));
+    if (saved) setItems((l) => l!.map((i) => (i.id === it.id ? saved : i)));
+  };
+
   const remove = async (it: ContentItem) => {
     if (!confirm('Supprimer cet élément ?')) return;
     await api.deleteContent(it.id).catch((e) => toast(e.message, 'error'));
@@ -300,24 +314,23 @@ export function ContentAdmin() {
 
   return (
     <div>
-      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {GAME_IDS.map((g) => (
-          <button
-            key={g}
-            onClick={() => setParams({ onglet: 'jeux', jeu: g })}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${g === gameId ? 'bg-wine-700 text-white' : 'bg-white/70 text-wine-700'}`}
-          >
-            {GAMES[g].title}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-4 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher…" className="input py-2 pl-9 text-sm" />
-        </div>
-        <Btn className="btn-primary shrink-0 px-4" onClick={() => setDraft({ difficulty: 'easy', active: true, toConfirm: false, data: EMPTY[gameId]() })}>
+      <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,240px)_1fr_auto]">
+        <label className="block">
+          <span className="sr-only">Jeu</span>
+          <select className="input py-2.5 text-sm font-semibold" value={gameId} onChange={(e) => setParams({ onglet: 'jeux', jeu: e.target.value })}>
+            {GAME_IDS.map((g) => (
+              <option key={g} value={g}>
+                {GAMES[g].title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="relative block">
+          <span className="sr-only">Rechercher</span>
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/70" aria-hidden />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher…" className="input py-2.5 pl-9 text-sm" />
+        </label>
+        <Btn className="btn-primary px-5" onClick={() => setDraft({ difficulty: 'easy', active: true, toConfirm: false, data: EMPTY[gameId]() })}>
           <Plus className="h-5 w-5" /> Ajouter
         </Btn>
       </div>
@@ -326,42 +339,46 @@ export function ContentAdmin() {
         <Loader />
       ) : (
         <>
-          <p className="mb-3 text-xs text-ink/60">
-            {items.filter((i) => i.active).length} actif(s) sur {items.length}. Les éléments marqués « à confirmer » reprennent des repères de la discussion : vérifiez-les.
+          <p className="mb-3 text-sm text-ink/75">
+            {items.filter((i) => i.active).length} {UNIT[gameId]} actifs sur {items.length}
+            {items.some((i) => i.toConfirm) && ' · les éléments « À confirmer » reprennent des faits à vérifier'}
           </p>
           <ul className="space-y-2">
-            <AnimatePresence>
-              {filtered.map((it) => {
-                const s = summary(gameId, it.data);
-                return (
-                  <motion.li key={it.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} className={`card flex items-start gap-3 p-3 ${it.active ? '' : 'opacity-50'}`}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-wine-700">{s.title}</p>
-                      {s.sub && <p className="mt-0.5 text-xs text-ink/60">{s.sub}</p>}
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        <span className="chip py-0.5">{DIFFICULTY_LABELS[it.difficulty]}</span>
-                        {it.toConfirm && (
-                          <span className="chip bg-gold-300/40 py-0.5 text-gold-700">
-                            <AlertCircle className="h-3 w-3" /> À confirmer
-                          </span>
-                        )}
-                      </div>
+            {filtered.map((it) => {
+              const s = summary(gameId, it.data);
+              const edit = () => setDraft({ id: it.id, difficulty: it.difficulty, active: it.active, toConfirm: it.toConfirm, data: structuredClone(it.data) });
+              return (
+                <li key={it.id} className={`card flex items-start gap-3 p-3 sm:p-4 ${it.active ? '' : 'bg-blush-50/60'}`}>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-wine-800">{s.title}</p>
+                    {s.sub && <p className="mt-0.5 text-xs text-ink/75">{s.sub}</p>}
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                      <span className="rounded-full bg-blush-100 px-2 py-0.5 font-semibold text-wine-800">{DIFFICULTY_LABELS[it.difficulty]}</span>
+                      {!it.active && <span className="rounded-full bg-ink/10 px-2 py-0.5 font-semibold text-ink/80">Retiré du jeu</span>}
+                      {it.toConfirm && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gold-300/40 px-2 py-0.5 font-semibold text-gold-700">
+                          <AlertCircle className="h-3 w-3" /> À confirmer
+                        </span>
+                      )}
                     </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button onClick={() => toggle(it)} className="rounded-full p-2 text-wine-500 hover:bg-blush-50" aria-label={it.active ? 'Désactiver' : 'Activer'}>
-                        {it.active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </button>
-                      <button onClick={() => setDraft({ id: it.id, difficulty: it.difficulty, active: it.active, toConfirm: it.toConfirm, data: structuredClone(it.data) })} className="rounded-full p-2 text-wine-500 hover:bg-blush-50" aria-label="Modifier">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => remove(it)} className="rounded-full p-2 text-ink/40 hover:bg-blush-50 hover:text-wine-600" aria-label="Supprimer">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </motion.li>
-                );
-              })}
-            </AnimatePresence>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button onClick={edit} className="flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-wine-700 hover:bg-blush-50">
+                      <Pencil className="h-4 w-4" /> <span className="hidden sm:inline">Modifier</span>
+                      <span className="sr-only sm:hidden">Modifier</span>
+                    </button>
+                    <RowMenu
+                      label={`Autres actions pour « ${s.title.slice(0, 40)} »`}
+                      items={[
+                        { label: it.active ? 'Retirer du jeu' : 'Remettre dans le jeu', icon: it.active ? EyeOff : Eye, onClick: () => toggle(it) },
+                        ...(it.toConfirm ? [{ label: 'Marquer comme confirmé', icon: Check, onClick: () => confirmItem(it) }] : []),
+                        { label: 'Supprimer', icon: Trash2, onClick: () => remove(it), danger: true },
+                      ]}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

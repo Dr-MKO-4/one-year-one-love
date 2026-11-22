@@ -58,7 +58,7 @@ function Recap({ session }: { session: SessionDTO }) {
         <motion.li key={r.key} variants={rise} className="flex items-start gap-3 rounded-2xl bg-white/70 p-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-wine-700">{r.text}</p>
-            {r.detail && <p className="mt-0.5 text-xs text-ink/60">{r.detail}</p>}
+            {r.detail && <p className="mt-0.5 text-xs text-ink/70">{r.detail}</p>}
           </div>
           <ResultBadge result={r.result} />
         </motion.li>
@@ -72,6 +72,8 @@ export function GameResult({ session }: { session: SessionDTO }) {
   const toast = useToast();
   const game = GAMES[session.gameId];
   const headline = session.coupleScore ?? session.scores.miguel ?? session.scores.adele ?? null;
+  // Jeux de comparaison : le score commun EST le taux de réponses identiques.
+  const isCompat = session.compatibility !== null;
 
   useEffect(() => {
     const t = setTimeout(() => celebrate((headline ?? 0) >= 50 ? 'big' : 'soft'), 400);
@@ -98,8 +100,8 @@ export function GameResult({ session }: { session: SessionDTO }) {
   return (
     <div>
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <p className="font-script text-3xl text-blush-500">Partie terminée</p>
-        <h1 className="font-display text-4xl font-bold">{game.title}</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-wine-600">Partie terminée</p>
+        <h1 className="mt-1 text-4xl">{game.title}</h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="mx-auto mt-3 max-w-md text-ink/75">
           {encouragement(headline)}
         </motion.p>
@@ -107,33 +109,25 @@ export function GameResult({ session }: { session: SessionDTO }) {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="card mt-6 flex flex-wrap items-start justify-center gap-6 p-6">
         {session.coupleScore !== null && (
-          <motion.div variants={rise} className="w-full flex justify-center">
-            <ScoreRing value={session.coupleScore} size={150} label="Score commun" delay={0.2} />
+          <motion.div variants={rise} className="flex w-full flex-col items-center gap-1">
+            <ScoreRing value={session.coupleScore} size={150} label={isCompat ? 'Réponses identiques' : 'Score commun'} delay={0.2} />
+            <p className="max-w-xs text-center text-xs text-ink/75">
+              {isCompat ? 'Part des manches où vous avez répondu pareil. Un jeu, pas une mesure scientifique.' : 'Moyenne de vos deux résultats.'}
+            </p>
           </motion.div>
         )}
         {session.players.map((p, i) => (
           <motion.div key={p} variants={rise} className="flex flex-col items-center gap-2">
             <ScoreRing value={session.scores[p] ?? null} size={104} tone="blush" delay={0.5 + i * 0.2} />
-            <span className="flex items-center gap-2 text-sm font-bold text-wine-700">
+            <span className="flex items-center gap-2 text-sm font-semibold text-wine-800">
               <Avatar player={p} size={22} /> {PLAYER_NAMES[p]}
             </span>
+            <span className="text-xs text-ink/75">{isCompat ? 'Participation' : 'Bonnes réponses'}</span>
           </motion.div>
         ))}
-        {session.compatibility !== null && (
-          <motion.div variants={rise} className="flex flex-col items-center gap-2">
-            <ScoreRing value={session.compatibility} size={104} tone="gold" delay={0.9} />
-            <span className="text-sm font-bold text-gold-700">Compatibilité</span>
-          </motion.div>
-        )}
       </motion.div>
-      {session.compatibility !== null && (
-        <p className="mt-2 text-center text-xs text-ink/50">La compatibilité est le taux de réponses identiques : un jeu, pas une mesure scientifique.</p>
-      )}
-      {['would-you-rather', 'complete-my-sentence'].includes(session.gameId) && (
-        <p className="mt-1 text-center text-xs text-ink/50">Scores personnels : participation.</p>
-      )}
       {secs !== null && (
-        <p className="mt-3 flex items-center justify-center gap-1 text-xs text-ink/50">
+        <p className="mt-3 flex items-center justify-center gap-1 text-xs text-ink/70">
           <Timer className="h-3.5 w-3.5" /> Durée de la partie : {Math.floor(secs / 60)} min {secs % 60} s
         </p>
       )}

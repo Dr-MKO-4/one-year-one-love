@@ -6,14 +6,14 @@ import { GAMES, PLAYER_NAMES } from '@shared/types';
 import { api, type Dashboard } from '@/services/api';
 import { getSocket } from '@/services/socket';
 import { GAME_VISUALS } from '@/games/registry';
-import { AnimatedNumber, Loader, Page, ScoreRing, SectionTitle, rise, stagger } from '@/components/ui';
+import { AnimatedNumber, Empty, Loader, Page, ScoreRing, SectionTitle } from '@/components/ui';
 import { Avatar } from '@/components/games/common';
 
 /** Courbe de progression du score commun (une seule série : le titre la nomme, pas de légende). */
 function Sparkline({ points }: { points: Array<{ date: string; couple: number | null }> }) {
   const [hover, setHover] = useState<number | null>(null);
   const data = points.filter((p) => p.couple !== null) as Array<{ date: string; couple: number }>;
-  if (data.length < 2) return <p className="text-xs text-ink/50">{data.length === 1 ? 'Encore 1 partie pour voir la courbe.' : 'La courbe apparaît après 2 parties.'}</p>;
+  if (data.length < 2) return <p className="text-xs text-ink/70">{data.length === 1 ? 'Encore 1 partie pour voir la courbe.' : 'La courbe apparaît après 2 parties.'}</p>;
   const W = 240;
   const H = 56;
   const pad = 6;
@@ -56,81 +56,104 @@ export function GamesDashboard() {
 
   if (!dash) return <Loader />;
 
+  // État de départ : une seule invitation à jouer plutôt que des jauges vides.
+  if (dash.sessionsCompleted === 0) {
+    return (
+      <Page>
+        <SectionTitle kicker="Scores" title="Nos scores" />
+        <Empty icon={<Trophy className="h-6 w-6" />} title="Pas encore de partie terminée">
+          <p>Vos scores, la compatibilité et la progression par jeu apparaîtront ici après votre première partie.</p>
+          <Link to="/jeux" className="btn-primary mt-4">
+            <Gamepad2 className="h-5 w-5" /> Choisir un jeu
+          </Link>
+        </Empty>
+        {dash.sessionsInProgress + dash.sessionsInterrupted > 0 && (
+          <Link to="/jeux/historique" className="btn-white mt-4 w-full">
+            <History className="h-5 w-5" /> Reprendre une partie en cours
+          </Link>
+        )}
+      </Page>
+    );
+  }
+
+  const played = dash.perGame.filter((g) => g.played > 0);
   const tiles = [
-    { icon: Gamepad2, label: 'Parties jouées', value: dash.sessionsTotal },
-    { icon: CheckCircle2, label: 'Parties terminées', value: dash.sessionsCompleted },
-    { icon: Trophy, label: 'Jeux terminés', value: dash.gamesFinished, suffix: ' / 6' },
+    { label: 'Parties lancées', value: dash.sessionsTotal },
+    { label: 'Terminées', value: dash.sessionsCompleted },
+    { label: 'Jeux essayés', value: dash.gamesFinished, suffix: ' / 6' },
   ];
 
   return (
     <Page className="max-w-5xl">
-      <SectionTitle kicker="Tableau de bord" title="Nos scores">
-        Moyennes des parties terminées, normalisées sur 100. Les parties interrompues ne comptent pas.
+      <SectionTitle kicker="Scores" title="Nos scores">
+        Moyennes des parties terminées, sur 100. Les parties interrompues ne comptent pas.
       </SectionTitle>
 
-      <motion.section variants={stagger} initial="hidden" animate="show" className="card grid grid-cols-2 gap-6 p-6 sm:grid-cols-4">
-        <motion.div variants={rise} className="col-span-2 flex justify-center sm:col-span-1">
-          <ScoreRing value={dash.couple} size={140} label="Score commun" />
-        </motion.div>
-        {(['miguel', 'adele'] as const).map((p, i) => (
-          <motion.div key={p} variants={rise} className="flex flex-col items-center gap-2">
-            <ScoreRing value={dash[p]} size={110} tone="blush" delay={0.2 + i * 0.15} />
-            <span className="flex items-center gap-2 text-sm font-bold text-wine-700">
-              <Avatar player={p} size={22} /> {PLAYER_NAMES[p]}
-            </span>
-          </motion.div>
-        ))}
-        <motion.div variants={rise} className="col-span-2 flex flex-col items-center gap-2 sm:col-span-1">
-          <ScoreRing value={dash.compatibility} size={110} tone="gold" delay={0.5} />
-          <span className="text-sm font-bold text-gold-700">Compatibilité</span>
-        </motion.div>
-      </motion.section>
-
-      <motion.section variants={stagger} initial="hidden" animate="show" className="mt-4 grid grid-cols-3 gap-3">
-        {tiles.map((t) => (
-          <motion.div key={t.label} variants={rise} className="card p-4 text-center">
-            <t.icon className="mx-auto h-5 w-5 text-wine-400" />
-            <p className="mt-1 font-display text-3xl font-bold text-wine-700">
-              <AnimatedNumber value={t.value} />
-              {t.suffix && <span className="text-lg text-wine-400">{t.suffix}</span>}
-            </p>
-            <p className="text-[11px] font-semibold text-ink/60">{t.label}</p>
-          </motion.div>
-        ))}
-      </motion.section>
+      <section className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
+        <div className="card flex flex-wrap items-center justify-around gap-6 p-6">
+          <div className="flex flex-col items-center gap-1">
+            <ScoreRing value={dash.couple} size={140} label="Score commun" />
+            <p className="max-w-[12rem] text-center text-xs text-ink/70">Moyenne de vos parties à deux</p>
+          </div>
+          <div className="flex gap-6">
+            {(['miguel', 'adele'] as const).map((p) => (
+              <div key={p} className="flex flex-col items-center gap-2">
+                <ScoreRing value={dash[p]} size={104} tone="blush" />
+                <span className="flex items-center gap-2 text-sm font-semibold text-wine-800">
+                  <Avatar player={p} size={22} /> {PLAYER_NAMES[p]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-4">
+          <div className="card flex items-center gap-4 p-5">
+            <ScoreRing value={dash.compatibility} size={88} stroke={8} tone="gold" />
+            <div>
+              <p className="font-semibold text-gold-700">Compatibilité</p>
+              <p className="text-sm text-ink/75">Part de réponses identiques dans « Tu préfères quoi ? » et « Complete My Sentence ».</p>
+            </div>
+          </div>
+          <dl className="grid grid-cols-3 gap-3">
+            {tiles.map((t) => (
+              <div key={t.label} className="card p-3 text-center">
+                <dd className="font-display text-2xl text-wine-800 sm:text-3xl">
+                  <AnimatedNumber value={t.value} />
+                  {t.suffix && <span className="text-base text-ink/70">{t.suffix}</span>}
+                </dd>
+                <dt className="text-xs font-semibold text-ink/70">{t.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
 
       {dash.best && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-4 flex items-center gap-4 rounded-3xl bg-wine-gradient p-5 text-white">
-          <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 3 }}>
-            <Award className="h-10 w-10 text-gold-300" />
-          </motion.div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Meilleur résultat individuel</p>
-            <p className="font-display text-xl font-bold">
-              {PLAYER_NAMES[dash.best.player]} · {dash.best.score} / 100
-            </p>
-            <p className="text-sm text-white/80">
-              {GAMES[dash.best.gameId].title}, le {new Date(dash.best.date).toLocaleDateString('fr-FR')}
-            </p>
-          </div>
-        </motion.div>
+        <div className="mt-4 flex items-center gap-4 rounded-3xl border border-blush-100 bg-white p-5">
+          <Award className="h-8 w-8 shrink-0 text-gold-700" aria-hidden />
+          <p className="text-sm text-ink/85">
+            <span className="font-semibold text-wine-800">Meilleur résultat individuel :</span> {PLAYER_NAMES[dash.best.player]}, {dash.best.score} / 100 à{' '}
+            {GAMES[dash.best.gameId].title}, le {new Date(dash.best.date).toLocaleDateString('fr-FR')}.
+          </p>
+        </div>
       )}
 
-      <h2 className="mb-3 mt-8 text-xl font-bold">Progression par jeu</h2>
-      <motion.section variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-4 sm:grid-cols-2">
-        {dash.perGame.map((g) => {
+      <h2 className="mb-1 mt-8 text-xl">Progression par jeu</h2>
+      <p className="mb-4 text-sm text-ink/70">La courbe du score commun apparaît à partir de 2 parties terminées d’un même jeu.</p>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {played.map((g) => {
           const V = GAME_VISUALS[g.gameId];
           return (
-            <motion.div key={g.gameId} variants={rise} className="card p-5">
+            <div key={g.gameId} className="card p-5">
               <div className="mb-3 flex items-center gap-3">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${V.gradient} text-white`}>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${V.gradient} text-white`}>
                   <V.icon className="h-5 w-5" />
                 </span>
-                <div className="flex-1">
-                  <Link to={`/jeux/${g.gameId}`} className="font-bold text-wine-700 hover:underline">
+                <div className="min-w-0 flex-1">
+                  <Link to={`/jeux/${g.gameId}`} className="font-semibold text-wine-800 hover:underline">
                     {GAMES[g.gameId].title}
                   </Link>
-                  <p className="text-xs text-ink/60">
+                  <p className="text-xs text-ink/70">
                     {g.played} partie{g.played > 1 ? 's' : ''} terminée{g.played > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -139,22 +162,26 @@ export function GamesDashboard() {
                 {[
                   ['Miguel', g.miguel],
                   ['Adèle', g.adele],
-                  [g.compatibility !== null ? 'Compat.' : 'Commun', g.compatibility ?? g.couple],
-                ].map(([l, v]) => (
+                  [g.compatibility !== null ? 'Compatibilité' : 'Commun', g.compatibility ?? g.couple],
+                ].map(([l, val]) => (
                   <div key={l as string} className="rounded-xl bg-blush-50 py-2">
-                    <dt className="text-[10px] font-bold uppercase tracking-wider text-wine-500/70">{l}</dt>
-                    <dd className="font-display text-xl font-bold text-wine-700">{v ?? '–'}</dd>
+                    <dt className="text-[11px] font-semibold text-wine-700">{l}</dt>
+                    <dd className="font-display text-xl text-wine-800">{val ?? '–'}</dd>
                   </div>
                 ))}
               </dl>
-              <p className="mb-1 text-[11px] font-semibold text-ink/50">Score commun, dernières parties</p>
-              <Sparkline points={g.progression} />
-            </motion.div>
+              {g.progression.filter((x) => x.couple !== null).length >= 2 && <Sparkline points={g.progression} />}
+            </div>
           );
         })}
-      </motion.section>
+      </section>
+      {played.length < 6 && (
+        <p className="mt-4 text-sm text-ink/70">
+          Pas encore joué : {dash.perGame.filter((g) => g.played === 0).map((g) => GAMES[g.gameId].title).join(', ')}.
+        </p>
+      )}
 
-      <Link to="/jeux/historique" className="btn-white mt-8 w-full">
+      <Link to="/jeux/historique" className="btn-white mt-8 w-full sm:w-auto">
         <History className="h-5 w-5" /> Voir tout l’historique
       </Link>
     </Page>

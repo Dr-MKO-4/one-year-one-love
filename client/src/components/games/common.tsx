@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Clock, Eye, EyeOff, Hand, SkipForward, X } from 'lucide-react';
 import { PLAYER_NAMES, type GameId, type Player, type SessionDTO } from '@shared/types';
@@ -78,18 +78,15 @@ export function HandOff({ to, children, id }: { to: Player; children: ReactNode;
   return (
     <AnimatePresence mode="wait">
       {!ready ? (
-        <motion.div key="hand" initial={{ opacity: 0, rotateY: -90 }} animate={{ opacity: 1, rotateY: 0 }} exit={{ opacity: 0, rotateY: 90 }} className="card flex flex-col items-center gap-4 p-8 text-center">
-          <motion.div animate={{ rotate: [0, -12, 12, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}>
-            <Hand className="h-10 w-10 text-wine-500" />
-          </motion.div>
-          <p className="font-display text-2xl font-bold text-wine-700">Passe le téléphone à {PLAYER_NAMES[to]}</p>
-          <p className="text-sm text-ink/60">Les réponses restent secrètes jusqu’à la révélation.</p>
+        <motion.div key="hand" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card flex flex-col items-center gap-4 p-8 text-center">
+          <Hand className="h-9 w-9 text-wine-600" aria-hidden />
+          <h2 className="text-2xl">Passe le téléphone à {PLAYER_NAMES[to]}</h2>
           <Btn onClick={() => setReady(true)}>
-            <Eye className="h-5 w-5" /> C’est moi, {PLAYER_NAMES[to]}
+            <Eye className="h-5 w-5" /> Je suis {PLAYER_NAMES[to]}, afficher
           </Btn>
         </motion.div>
       ) : (
-        <motion.div key="content" initial={{ opacity: 0, rotateY: -90 }} animate={{ opacity: 1, rotateY: 0 }} exit={{ opacity: 0 }}>
+        <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           {children}
         </motion.div>
       )}
@@ -121,6 +118,7 @@ export function QuestionCard({ children, k, kicker }: { children: ReactNode; k: 
 export function AnswerInput({
   onSubmit,
   placeholder = 'Ta réponse…',
+  label = 'Ta réponse',
   busy,
   secret = false,
   resetKey,
@@ -128,6 +126,7 @@ export function AnswerInput({
 }: {
   onSubmit: (v: string) => void;
   placeholder?: string;
+  label?: string;
   busy?: boolean;
   secret?: boolean;
   resetKey?: string | number;
@@ -135,6 +134,7 @@ export function AnswerInput({
 }) {
   const [v, setV] = useState('');
   const [show, setShow] = useState(!secret);
+  const inputId = useId();
   useEffect(() => setV(''), [resetKey]);
   const send = () => v.trim() && onSubmit(v.trim());
   return (
@@ -145,11 +145,15 @@ export function AnswerInput({
       }}
       className="space-y-3"
     >
+      <label className="label" htmlFor={inputId}>
+        {label}
+      </label>
       <div className="relative">
         {multiline ? (
-          <textarea value={v} onChange={(e) => setV(e.target.value)} placeholder={placeholder} rows={3} maxLength={300} className="input resize-none" autoFocus />
+          <textarea id={inputId} value={v} onChange={(e) => setV(e.target.value)} placeholder={placeholder} rows={3} maxLength={300} className="input resize-none" autoFocus />
         ) : (
           <input
+            id={inputId}
             value={v}
             onChange={(e) => setV(e.target.value)}
             placeholder={placeholder}
@@ -161,7 +165,7 @@ export function AnswerInput({
           />
         )}
         {secret && !multiline && (
-          <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink/40" aria-label={show ? 'Masquer' : 'Afficher'}>
+          <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink/70" aria-label={show ? 'Masquer' : 'Afficher'}>
             {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         )}
@@ -175,7 +179,7 @@ export function AnswerInput({
 
 export function SkipButton({ onClick, label = 'Passer cette question', busy }: { onClick: () => void; label?: string; busy?: boolean }) {
   return (
-    <button onClick={onClick} disabled={busy} className="mx-auto mt-4 flex items-center gap-1 text-sm font-semibold text-ink/50 hover:text-wine-600">
+    <button onClick={onClick} disabled={busy} className="mx-auto mt-4 flex items-center gap-1 text-sm font-semibold text-ink/70 hover:text-wine-600">
       <SkipForward className="h-4 w-4" /> {label}
     </button>
   );
@@ -242,7 +246,7 @@ export function Countdown({ deadline, totalSec, offset, onExpire }: { deadline: 
   return (
     <div className="mb-4 flex items-center gap-3">
       <motion.span animate={urgent ? { scale: [1, 1.2, 1] } : {}} transition={{ repeat: Infinity, duration: 0.8 }}>
-        <Clock className={`h-5 w-5 ${urgent ? 'text-wine-600' : 'text-wine-400'}`} />
+        <Clock className={`h-5 w-5 ${urgent ? 'text-wine-600' : 'text-wine-600'}`} />
       </motion.span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-blush-100">
         <motion.div className={`h-full rounded-full ${urgent ? 'bg-wine-600' : 'bg-wine-gradient'}`} animate={{ width: `${ratio * 100}%` }} transition={{ ease: 'linear', duration: 0.25 }} />
@@ -286,7 +290,7 @@ export function ResultBadge({ result }: { result?: string }) {
     incorrect: ['Pas cette fois', 'bg-blush-100 text-wine-600'],
     failed: ['Pas cette fois', 'bg-blush-100 text-wine-600'],
     different: ['Différent', 'bg-blush-100 text-wine-600'],
-    skipped: ['Passée', 'bg-ink/5 text-ink/50'],
+    skipped: ['Passée', 'bg-ink/5 text-ink/70'],
   };
   const [label, cls] = map[result] ?? [result, 'bg-ink/5'];
   return <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${cls}`}>{label}</span>;

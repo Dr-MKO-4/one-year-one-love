@@ -52,27 +52,15 @@ export function HomePage() {
   return (
     <Page>
       <section className="pt-4 text-center">
-        <p className="font-script text-3xl text-wine-500">Bonjour {PLAYER_NAMES[me]}</p>
-        <h1 className="mt-1 font-display text-4xl font-bold leading-tight sm:text-5xl">
+        <p className="font-script text-2xl text-wine-600">Bonjour {PLAYER_NAMES[me]}</p>
+        <h1 className="mt-1 font-display text-4xl leading-tight sm:text-5xl">
           {isAnniversary ? 'Un an aujourd’hui' : 'Miguel & Adèle'}
         </h1>
         <p className="mx-auto mt-3 max-w-md text-ink/75">Ensemble depuis le 22 novembre 2025.</p>
       </section>
 
-      {/* Compteur : les jours portent le sens, le reste reste discret. */}
-      <section className="mt-8 text-center" aria-label="Temps passé ensemble">
-        <p className="font-display text-6xl font-bold leading-none text-wine-700 sm:text-7xl">
-          <AnimatedNumber value={together.days} duration={1.6} />
-        </p>
-        <p className="mt-1 text-sm font-bold uppercase tracking-[0.2em] text-wine-600">jours ensemble</p>
-        <p className="mt-3 font-semibold tabular-nums text-ink/70" aria-live="off">
-          et {together.hours} h {pad(together.minutes)} min {pad(together.seconds)} s
-        </p>
-        <p className="mt-1 text-sm text-ink/65">{sinceMeeting} jours depuis notre rencontre, le 22 mars 2025</p>
-      </section>
-
       {letter && (
-        <section className="mt-10">
+        <section className="mt-8">
           <div className="overflow-hidden rounded-3xl border border-blush-100 bg-white shadow-soft">
             <div className="flex items-center gap-3 p-5 sm:p-6">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blush-100 text-wine-600">
@@ -94,7 +82,7 @@ export function HomePage() {
                   className="overflow-hidden"
                 >
                   <div className="border-t border-blush-100 px-5 pb-6 pt-5 sm:px-8">
-                    <p className="whitespace-pre-line font-display text-lg leading-relaxed text-ink/90">{letter.body}</p>
+                    <p className="whitespace-pre-line font-letter text-lg leading-relaxed text-ink/90">{letter.body}</p>
                     {letter.signature && <p className="mt-5 text-right font-script text-3xl text-wine-600">{letter.signature}</p>}
                   </div>
                 </motion.div>
@@ -113,7 +101,19 @@ export function HomePage() {
         </section>
       )}
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2">
+      {/* Compteur : les jours portent le sens, le reste reste discret. */}
+      <section className="mt-10 text-center" aria-label="Temps passé ensemble">
+        <p className="font-display text-6xl leading-none text-wine-700 sm:text-7xl">
+          <AnimatedNumber value={together.days} duration={1.6} />
+        </p>
+        <p className="mt-1 text-sm font-bold uppercase tracking-[0.2em] text-wine-600">jours ensemble</p>
+        <p className="mt-3 font-semibold tabular-nums text-ink/70" aria-live="off">
+          et {together.hours} h {pad(together.minutes)} min {pad(together.seconds)} s
+        </p>
+        <p className="mt-1 text-sm text-ink/65">{sinceMeeting} jours depuis notre rencontre, le 22 mars 2025</p>
+      </section>
+
+      <section className="mt-10 grid gap-4 sm:grid-cols-2">
         <Link to="/jeux" className="group block rounded-3xl bg-wine-gradient p-6 text-white shadow-soft">
           <Gamepad2 className="h-7 w-7" />
           <h2 className="mt-3 font-display text-2xl font-bold text-white">Our Love Games</h2>

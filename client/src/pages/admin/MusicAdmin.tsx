@@ -72,7 +72,7 @@ export function MusicAdmin() {
         <p>
           La musique est <strong>partagée</strong> : quand l’un de vous lance, met en pause, avance ou zappe, le téléphone de l’autre suit en même temps. Si personne n’est connecté, elle se met en pause toute seule.
         </p>
-        <p className="mt-2">La playlist correspond exactement aux fichiers du dossier musique (volume Railway en ligne). Formats : mp3, m4a, aac, ogg, opus, wav, flac.</p>
+        <p className="mt-2">Formats acceptés : mp3, m4a, aac, ogg, opus, wav, flac. « Actualiser la liste » reprend les fichiers ajoutés directement sur le serveur.</p>
       </div>
       <div className="mb-4 grid grid-cols-2 gap-2">
         <Btn className="btn-primary" disabled={uploading.length > 0} onClick={() => input.current?.click()}>
@@ -85,7 +85,7 @@ export function MusicAdmin() {
             setScanning(true);
             try {
               setTracks(await api.rescanTracks());
-              toast('Dossier relu', 'info');
+              toast('Liste actualisée', 'info');
             } catch (e) {
               toast((e as Error).message, 'error');
             } finally {
@@ -93,7 +93,7 @@ export function MusicAdmin() {
             }
           }}
         >
-          <RefreshCw className={`h-5 w-5 ${scanning ? 'animate-spin' : ''}`} /> Relire le dossier
+          <RefreshCw className={`h-5 w-5 ${scanning ? 'animate-spin' : ''}`} /> Actualiser la liste
         </Btn>
       </div>
 
@@ -105,14 +105,14 @@ export function MusicAdmin() {
             {tracks.map((t, i) => (
               <motion.li key={t.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30 }} className="card flex items-center gap-2 p-3">
                 <div className="flex flex-col">
-                  <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded p-0.5 text-wine-400 disabled:opacity-20" aria-label="Monter">
+                  <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded-lg p-1.5 text-wine-700 hover:bg-blush-50 disabled:opacity-25" aria-label={`Déplacer « ${t.title} » plus haut`}>
                     <ArrowUp className="h-4 w-4" />
                   </button>
-                  <button onClick={() => move(i, 1)} disabled={i === tracks.length - 1} className="rounded p-0.5 text-wine-400 disabled:opacity-20" aria-label="Descendre">
+                  <button onClick={() => move(i, 1)} disabled={i === tracks.length - 1} className="rounded-lg p-1.5 text-wine-700 hover:bg-blush-50 disabled:opacity-25" aria-label={`Déplacer « ${t.title} » plus bas`}>
                     <ArrowDown className="h-4 w-4" />
                   </button>
                 </div>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-wine-gradient text-white">
+                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blush-100 text-wine-700 sm:flex">
                   <FileAudio className="h-5 w-5" />
                 </span>
                 {edit?.id === t.id ? (
@@ -123,11 +123,11 @@ export function MusicAdmin() {
                 ) : (
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-wine-700">{t.title}</p>
-                    <p className="truncate text-xs text-ink/60">
+                    <p className="truncate text-xs text-ink/70">
                       {t.artist} · {fmt(t.durationSec)}
                       {t.sizeBytes ? ` · ${(t.sizeBytes / 1024 / 1024).toFixed(1)} Mo` : ''}
                     </p>
-                    <p className="truncate text-[10px] text-ink/40">{t.fileName}</p>
+                    <p className="hidden truncate text-xs text-ink/70 sm:block">{t.fileName}</p>
                   </div>
                 )}
                 {edit?.id === t.id ? (
@@ -135,13 +135,13 @@ export function MusicAdmin() {
                     <button onClick={saveEdit} className="rounded-full p-2 text-emerald-600 hover:bg-blush-50" aria-label="Enregistrer">
                       <Check className="h-4 w-4" />
                     </button>
-                    <button onClick={() => setEdit(null)} className="rounded-full p-2 text-ink/40 hover:bg-blush-50" aria-label="Annuler">
+                    <button onClick={() => setEdit(null)} className="rounded-full p-2 text-ink/70 hover:bg-blush-50" aria-label="Annuler">
                       <X className="h-4 w-4" />
                     </button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => setEdit({ id: t.id, title: t.title, artist: t.artist })} className="rounded-full p-2 text-wine-500 hover:bg-blush-50" aria-label="Renommer">
+                    <button onClick={() => setEdit({ id: t.id, title: t.title, artist: t.artist })} className="rounded-full p-2 text-wine-500 hover:bg-blush-50" aria-label={`Renommer « ${t.title} »`}>
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
@@ -150,7 +150,7 @@ export function MusicAdmin() {
                         await api.deleteTrack(t.id).catch((e) => toast(e.message, 'error'));
                         load();
                       }}
-                      className="rounded-full p-2 text-ink/40 hover:bg-blush-50 hover:text-wine-600"
+                      className="rounded-full p-2 text-ink/70 hover:bg-blush-50 hover:text-wine-600"
                       aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />

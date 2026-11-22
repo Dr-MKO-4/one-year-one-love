@@ -68,7 +68,7 @@ export function DeviceSelector({ shared, onChange }: { shared: boolean; onChange
   );
 }
 
-export function PlayerSelector({ value, onChange }: { value: Player; onChange: (p: Player) => void }) {
+export function PlayerSelector({ value, onChange, me }: { value: Player; onChange: (p: Player) => void; me?: Player }) {
   return (
     <Segmented
       layoutId="player"
@@ -79,6 +79,7 @@ export function PlayerSelector({ value, onChange }: { value: Player; onChange: (
         label: (
           <span className="flex items-center gap-2">
             <Avatar player={p} size={22} /> {PLAYER_NAMES[p]}
+            {p === me && <span className="text-xs font-normal opacity-80">(toi)</span>}
           </span>
         ),
       }))}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Pause, Play, Smartphone, Wifi, WifiOff, XCircle } from 'lucide-react';
+import { ArrowLeft, Pause, Play, Smartphone, WifiOff, XCircle } from 'lucide-react';
 import { DIFFICULTY_LABELS, GAMES, PLAYER_NAMES, type GameId, type Player, type SessionDTO } from '@shared/types';
 import { useMe } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
@@ -108,28 +108,28 @@ export function GamePlay() {
 
   return (
     <Page>
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <Link to="/jeux" className="flex items-center gap-1 text-sm font-semibold text-wine-600">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link to="/jeux" className="flex items-center gap-1 text-sm font-semibold text-wine-700">
           <ArrowLeft className="h-4 w-4" /> Jeux
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-wine-800">
           <MusicButton />
-          <span className="chip">{DIFFICULTY_LABELS[session.difficulty]}</span>
+          <span className="rounded-full bg-blush-100 px-2.5 py-1">{DIFFICULTY_LABELS[session.difficulty]}</span>
           {session.sharedDevice && (
-            <span className="chip" title="Un seul appareil">
-              <Smartphone className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-blush-100 px-2.5 py-1">
+              <Smartphone className="h-3.5 w-3.5" aria-hidden /> Un seul téléphone
             </span>
           )}
-          <motion.span animate={{ opacity: connected ? 1 : [1, 0.3, 1] }} transition={{ repeat: connected ? 0 : Infinity, duration: 1 }} title={connected ? 'Connecté en temps réel' : 'Reconnexion…'}>
-            {connected ? <Wifi className="h-4 w-4 text-emerald-500" /> : <WifiOff className="h-4 w-4 text-wine-500" />}
-          </motion.span>
         </div>
       </div>
+      {!connected && (
+        <p role="status" className="mb-4 flex items-center gap-2 rounded-2xl bg-gold-300/30 px-4 py-2.5 text-sm font-semibold text-gold-700">
+          <WifiOff className="h-4 w-4" aria-hidden /> Connexion perdue : reconnexion en cours, la partie reprendra là où elle en était.
+        </p>
+      )}
 
       {session.status !== 'completed' && (
-        <motion.h1 layoutId={`title-${session.gameId}`} className="mb-5 font-display text-3xl font-bold">
-          {game.title}
-        </motion.h1>
+        <h1 className="mb-5 text-3xl">{game.title}</h1>
       )}
 
       <AnimatePresence mode="wait">
@@ -139,9 +139,9 @@ export function GamePlay() {
           </motion.div>
         ) : session.status === 'interrupted' ? (
           <motion.div key="paused" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-8 text-center">
-            <Pause className="mx-auto mb-3 h-10 w-10 text-wine-400" />
-            <p className="font-display text-2xl font-bold text-wine-700">Partie interrompue</p>
-            <p className="mt-2 text-sm text-ink/60">Elle ne compte pas dans les moyennes. Vous pouvez la reprendre quand vous voulez.</p>
+            <Pause className="mx-auto mb-3 h-10 w-10 text-wine-600" />
+            <h2 className="text-2xl">Partie mise de côté</h2>
+            <p className="mt-2 text-sm text-ink/80">Elle ne compte pas dans vos scores tant qu’elle n’est pas terminée. Reprends-la quand vous voulez.</p>
             <Btn className="btn-primary mt-5" onClick={() => api.resume(session.id).then(accept).catch((e) => toast(e.message, 'error'))}>
               <Play className="h-5 w-5" /> Reprendre
             </Btn>
@@ -149,14 +149,17 @@ export function GamePlay() {
         ) : (
           <motion.div key="play" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Component session={session as SessionDTO<GameId>} me={me} act={act} busy={busy} clockOffset={offset} />
-            <button onClick={() => setConfirmQuit(true)} className="mx-auto mt-10 flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-ink/75 hover:bg-blush-50 hover:text-wine-700">
-              <XCircle className="h-4 w-4" /> Interrompre la partie
-            </button>
+            <div className="mt-10 rounded-2xl border border-blush-100 bg-white p-4 text-sm text-ink/80 sm:flex sm:items-center sm:justify-between sm:gap-4">
+              <p>Besoin d’une pause ? Quitte simplement la page : la partie reste en cours et vous la retrouverez dans « Parties en cours ».</p>
+              <button onClick={() => setConfirmQuit(true)} className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blush-200 px-4 py-2 font-semibold text-wine-800 hover:bg-blush-50 sm:mt-0">
+                <XCircle className="h-4 w-4" /> Mettre de côté
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <Modal open={confirmQuit} onClose={() => setConfirmQuit(false)} title="Interrompre la partie ?">
+      <Modal open={confirmQuit} onClose={() => setConfirmQuit(false)} title="Mettre la partie de côté ?">
         <p className="text-sm text-ink/70">
           La partie sera mise de côté et ne comptera pas dans les scores. Vous pourrez la reprendre plus tard depuis l’historique. Pour une simple pause, il suffit de quitter la page : elle reste en cours.
         </p>

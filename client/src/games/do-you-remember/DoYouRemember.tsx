@@ -88,7 +88,7 @@ export function DoYouRemember({ session, me, act, busy, clockOffset }: GameProps
                 ))}
               </div>
             ) : (
-              <AnswerInput busy={busy} resetKey={state.index} onSubmit={(v) => act('answer', { answer: v }, round.player)} />
+              <AnswerInput label={`${PLAYER_NAMES[round.player]}, ta réponse`} busy={busy} resetKey={state.index} onSubmit={(v) => act('answer', { answer: v }, round.player)} />
             )
           ) : (
             <WaitingFor player={round.player} text={`${PLAYER_NAMES[round.player]} cherche dans ses souvenirs`} />
@@ -111,7 +111,7 @@ export function DoYouRemember({ session, me, act, busy, clockOffset }: GameProps
                       key={c}
                       animate={correct ? { scale: [1, 1.04, 1] } : picked ? { x: [0, -6, 6, 0] } : {}}
                       className={`flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold ${
-                        correct ? 'bg-emerald-500 text-white' : picked ? 'bg-blush-200 text-wine-700' : 'bg-white/60 text-ink/50'
+                        correct ? 'bg-emerald-500 text-white' : picked ? 'bg-blush-200 text-wine-700' : 'bg-white/60 text-ink/70'
                       }`}
                     >
                       {correct ? <Check className="h-5 w-5" /> : picked ? <X className="h-5 w-5" /> : <span className="w-5" />}

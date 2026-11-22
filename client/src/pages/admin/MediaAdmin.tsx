@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Download, ImagePlus, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, Check, Download, ImagePlus, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { api, photoUrl, type Letter, type PhotoMeta, type TimelineEvent } from '@/services/api';
 import { useToast } from '@/lib/toast';
 import { resizeImage } from '@/lib/image';
-import { Btn, Loader, Modal } from '@/components/ui';
+import { Btn, Empty, Loader, Modal, RowMenu } from '@/components/ui';
 
 /* ------------------------------ Photos ------------------------------ */
 
@@ -43,22 +43,26 @@ export function PhotosAdmin() {
   return (
     <div>
       <input ref={input} type="file" accept="image/*" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
-      <Btn className="btn-primary mb-2 w-full" onClick={() => input.current?.click()} disabled={uploading > 0}>
-        <ImagePlus className="h-5 w-5" /> {uploading ? `Envoi… (${uploading})` : 'Ajouter des photos'}
-      </Btn>
-      <p className="mb-4 text-xs text-ink/60">
-        Les photos sont redimensionnées sur ton téléphone avant l’envoi, puis stockées en privé. Elles servent dans Memory of Us et la frise.
-      </p>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Btn className="btn-primary" onClick={() => input.current?.click()} disabled={uploading > 0}>
+          <ImagePlus className="h-5 w-5" /> {uploading ? `Envoi… (${uploading})` : 'Ajouter des photos'}
+        </Btn>
+        <p className="text-sm text-ink/75">Redimensionnées avant l’envoi, visibles par vous deux seulement.</p>
+      </div>
       {!photos ? (
         <Loader />
+      ) : !photos.length ? (
+        <Empty icon={<ImagePlus className="h-6 w-6" />} title="Aucune photo pour l’instant">
+          <p>Ajoute vos photos, puis relie-les à un moment de la frise ou à une paire de Memory of Us (une photo et sa date, par exemple).</p>
+        </Empty>
       ) : (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
           <AnimatePresence>
             {photos.map((p, i) => (
               <motion.div key={p.id} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.6 }} transition={{ delay: Math.min(i * 0.02, 0.3) }} className="group relative overflow-hidden rounded-2xl shadow-soft">
                 <img src={photoUrl(p.id)} alt={p.caption ?? ''} loading="lazy" className="aspect-square w-full object-cover transition-transform group-hover:scale-105" />
-                <button onClick={() => remove(p.id)} className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1.5 text-wine-600" aria-label="Supprimer">
-                  <Trash2 className="h-3.5 w-3.5" />
+                <button onClick={() => remove(p.id)} className="absolute right-1.5 top-1.5 rounded-full bg-white p-2 text-wine-700 shadow-sm" aria-label="Supprimer la photo">
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </motion.div>
             ))}
@@ -93,7 +97,7 @@ export function TimelineAdmin() {
         description: draft.description || null,
         photoId: draft.photoId || null,
         toConfirm: !!draft.toConfirm,
-        sortOrder: draft.sortOrder ?? (events?.length ?? 0),
+        sortOrder: draft.sortOrder ?? (events?.length ? Math.max(...events.map((e) => e.sortOrder)) + 1 : 0),
       };
       const saved = draft.id ? await api.updateEvent(draft.id, body) : await api.createEvent(body);
       setEvents((l) => (draft.id ? l!.map((e) => (e.id === saved.id ? saved : e)) : [...(l ?? []), saved]).sort((a, b) => a.sortOrder - b.sortOrder));
@@ -110,36 +114,75 @@ export function TimelineAdmin() {
     setEvents((l) => l!.filter((e) => e.id !== id));
   };
 
+  const patch = async (id: string, body: Partial<TimelineEvent>) => {
+    const saved = await api.updateEvent(id, body).catch((e) => toast(e.message, 'error'));
+    if (saved) setEvents((l) => l!.map((e) => (e.id === id ? saved : e)));
+  };
+
+  /** Déplace un moment d'un cran et renumérote l'ordre. */
+  const move = async (i: number, dir: -1 | 1) => {
+    if (!events) return;
+    const j = i + dir;
+    if (j < 0 || j >= events.length) return;
+    const next = [...events];
+    [next[i], next[j]] = [next[j], next[i]];
+    const renumbered = next.map((e, k) => ({ ...e, sortOrder: k }));
+    setEvents(renumbered);
+    await Promise.all(renumbered.map((e) => api.updateEvent(e.id, { sortOrder: e.sortOrder })));
+  };
+
   return (
     <div>
-      <Btn className="btn-primary mb-4 w-full" onClick={() => setDraft({ toConfirm: false })}>
-        <Plus className="h-5 w-5" /> Ajouter un moment
-      </Btn>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink/75">{events ? `${events.filter((e) => !e.toConfirm).length} publiés sur ${events.length}` : ''}</p>
+        <Btn className="btn-primary" onClick={() => setDraft({ toConfirm: false })}>
+          <Plus className="h-5 w-5" /> Ajouter un moment
+        </Btn>
+      </div>
       {!events ? (
         <Loader />
       ) : (
-        <ul className="space-y-2">
-          {events.map((e) => (
-            <li key={e.id} className="card flex items-center gap-3 p-3">
-              {e.photoId ? <img src={photoUrl(e.photoId)} alt="" className="h-12 w-12 rounded-xl object-cover" /> : <div className="h-12 w-12 rounded-xl bg-blush-100" />}
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-blush-500">{e.date}</p>
-                <p className="truncate text-sm font-semibold text-wine-700">{e.title}</p>
-                {e.toConfirm && (
-                  <span className="chip mt-1 bg-gold-300/40 py-0.5 text-gold-700">
-                    <AlertCircle className="h-3 w-3" /> À confirmer
-                  </span>
-                )}
+        <ol className="space-y-2">
+          {events.map((e, i) => (
+            <li key={e.id} className="card flex items-center gap-2 p-3 sm:gap-3">
+              <div className="flex flex-col">
+                <button onClick={() => move(i, -1)} disabled={i === 0} className="rounded-lg p-1.5 text-wine-700 hover:bg-blush-50 disabled:opacity-25" aria-label={`Déplacer « ${e.title} » plus tôt`}>
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button onClick={() => move(i, 1)} disabled={i === events.length - 1} className="rounded-lg p-1.5 text-wine-700 hover:bg-blush-50 disabled:opacity-25" aria-label={`Déplacer « ${e.title} » plus tard`}>
+                  <ArrowDown className="h-4 w-4" />
+                </button>
               </div>
-              <button onClick={() => setDraft(e)} className="rounded-full p-2 text-wine-500 hover:bg-blush-50" aria-label="Modifier">
-                <Pencil className="h-4 w-4" />
+              {e.photoId ? <img src={photoUrl(e.photoId)} alt="" className="hidden h-12 w-12 rounded-xl object-cover sm:block" /> : null}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-wine-700">{e.date}</p>
+                <p className="truncate text-sm font-semibold text-ink">{e.title}</p>
+                <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${e.toConfirm ? 'bg-gold-300/40 text-gold-700' : 'bg-emerald-50 text-emerald-800'}`}>
+                  {e.toConfirm ? <AlertCircle className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                  {e.toConfirm ? 'À confirmer : masqué' : 'Publié'}
+                </span>
+              </div>
+              {e.toConfirm && (
+                <button onClick={() => patch(e.id, { toConfirm: false })} className="hidden min-h-[40px] rounded-full bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700 sm:block">
+                  Confirmer
+                </button>
+              )}
+              <button onClick={() => setDraft(e)} className="flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-wine-700 hover:bg-blush-50">
+                <Pencil className="h-4 w-4" /> <span className="hidden sm:inline">Modifier</span>
+                <span className="sr-only sm:hidden">Modifier</span>
               </button>
-              <button onClick={() => remove(e.id)} className="rounded-full p-2 text-ink/40 hover:bg-blush-50" aria-label="Supprimer">
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <RowMenu
+                label={`Autres actions pour « ${e.title} »`}
+                items={[
+                  e.toConfirm
+                    ? { label: 'Confirmer et publier', icon: Check, onClick: () => patch(e.id, { toConfirm: false }) }
+                    : { label: 'Repasser à confirmer', icon: AlertCircle, onClick: () => patch(e.id, { toConfirm: true }) },
+                  { label: 'Supprimer', icon: Trash2, onClick: () => remove(e.id), danger: true },
+                ]}
+              />
             </li>
           ))}
-        </ul>
+        </ol>
       )}
       <Modal
         open={!!draft}
@@ -159,8 +202,8 @@ export function TimelineAdmin() {
         {draft && (
           <div className="space-y-4">
             <label className="block">
-              <span className="label">Date (texte libre)</span>
-              <input className="input" value={draft.date ?? ''} onChange={(e) => setDraft({ ...draft, date: e.target.value })} placeholder="Ex. : 14 février 2026" />
+              <span className="label">Date</span>
+              <input className="input" value={draft.date ?? ''} onChange={(e) => setDraft({ ...draft, date: e.target.value })} placeholder="14 février 2026, ou février 2026" />
             </label>
             <label className="block">
               <span className="label">Titre</span>
@@ -169,10 +212,6 @@ export function TimelineAdmin() {
             <label className="block">
               <span className="label">Description</span>
               <textarea className="input" rows={3} value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
-            </label>
-            <label className="block">
-              <span className="label">Position dans la frise</span>
-              <input type="number" className="input" value={draft.sortOrder ?? 0} onChange={(e) => setDraft({ ...draft, sortOrder: Number(e.target.value) })} />
             </label>
             {photos.length > 0 && (
               <div>
@@ -190,7 +229,7 @@ export function TimelineAdmin() {
               </div>
             )}
             <label className="flex items-center gap-2 text-sm font-semibold text-wine-700">
-              <input type="checkbox" checked={!!draft.toConfirm} onChange={(e) => setDraft({ ...draft, toConfirm: e.target.checked })} className="h-5 w-5 accent-wine-500" /> À confirmer
+              <input type="checkbox" checked={!!draft.toConfirm} onChange={(e) => setDraft({ ...draft, toConfirm: e.target.checked })} className="h-5 w-5 accent-wine-500" /> À confirmer (masqué sur la frise en attendant)
             </label>
           </div>
         )}
@@ -248,9 +287,9 @@ export function LetterAdmin() {
         </label>
       </div>
       <section aria-label="Aperçu de la lettre" className="rounded-3xl border border-blush-200 bg-white p-6">
-        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/60">Aperçu</p>
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/70">Aperçu</p>
         <h3 className="text-2xl font-bold">{letter.title || 'Sans titre'}</h3>
-        <p className="mt-4 whitespace-pre-line font-display text-lg leading-relaxed text-ink/85">{letter.body || 'Le texte de la lettre apparaîtra ici.'}</p>
+        <p className="mt-4 whitespace-pre-line font-letter text-lg leading-relaxed text-ink/85">{letter.body || 'Le texte de la lettre apparaîtra ici.'}</p>
         {letter.signature && <p className="mt-4 text-right font-script text-3xl text-wine-600">{letter.signature}</p>}
       </section>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -291,24 +330,35 @@ export function BackupAdmin() {
   return (
     <div className="space-y-4">
       <div className="card p-5">
-        <h3 className="text-lg font-bold">Exporter</h3>
-        <p className="mt-1 text-sm text-ink/70">Télécharge un fichier JSON avec les contenus, la frise, la lettre et tout l’historique des parties.</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <a href="/api/backup/export" className="btn-primary">
-            <Download className="h-5 w-5" /> Sans les photos
+        <h2 className="text-xl">Télécharger une copie</h2>
+        <p className="mt-1 text-sm text-ink/80">
+          Un fichier avec les contenus des jeux, la frise, la lettre et tout l’historique des parties. Les fichiers audio ne sont jamais inclus.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <a href="/api/backup/export?photos=1" className="rounded-2xl border border-blush-200 p-4 hover:bg-blush-50">
+            <span className="flex items-center gap-2 font-semibold text-wine-800">
+              <Download className="h-5 w-5" /> Copie complète
+            </span>
+            <span className="mt-1 block text-sm text-ink/75">Avec les photos. Fichier plus lourd, à garder en lieu sûr.</span>
           </a>
-          <a href="/api/backup/export?photos=1" className="btn-white">
-            <Download className="h-5 w-5" /> Avec les photos
+          <a href="/api/backup/export" className="rounded-2xl border border-blush-200 p-4 hover:bg-blush-50">
+            <span className="flex items-center gap-2 font-semibold text-wine-800">
+              <Download className="h-5 w-5" /> Copie légère
+            </span>
+            <span className="mt-1 block text-sm text-ink/75">Sans les photos. Pratique pour garder l’historique des parties.</span>
           </a>
         </div>
-        <p className="mt-2 text-xs text-ink/50">Les fichiers audio ne sont pas inclus : garde tes MP3 de ton côté.</p>
       </div>
       <div className="card p-5">
-        <h3 className="text-lg font-bold">Importer</h3>
-        <p className="mt-1 text-sm text-ink/70">Restaure une sauvegarde exportée depuis ce site.</p>
+        <h2 className="text-xl">Restaurer une copie</h2>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink/80">
+          <li>Choisis un fichier téléchargé depuis cette page.</li>
+          <li>Confirme : les éléments déjà présents avec le même identifiant sont remplacés, les autres sont conservés.</li>
+          <li>Un message indique le nombre de parties et de contenus restaurés.</li>
+        </ol>
         <input ref={input} type="file" accept="application/json" className="hidden" onChange={(e) => onImport(e.target.files?.[0])} />
-        <Btn className="btn-white mt-4 w-full" disabled={busy} onClick={() => input.current?.click()}>
-          <Upload className="h-5 w-5" /> {busy ? 'Import…' : 'Choisir un fichier'}
+        <Btn className="btn-white mt-4" disabled={busy} onClick={() => input.current?.click()}>
+          <Upload className="h-5 w-5" /> {busy ? 'Restauration…' : 'Choisir le fichier de sauvegarde'}
         </Btn>
       </div>
     </div>

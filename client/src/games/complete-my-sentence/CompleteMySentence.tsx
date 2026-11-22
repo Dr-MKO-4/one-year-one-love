@@ -18,7 +18,7 @@ import { Btn } from '@/components/ui';
 
 function Prompt({ round, k }: { round: SentenceRound; k: string | number }) {
   return (
-    <QuestionCard k={k} kicker={<PenLine className="h-6 w-6 text-blush-400" />}>
+    <QuestionCard k={k} kicker={<PenLine className="h-6 w-6 text-wine-600" />}>
       <p className="font-display text-2xl font-bold italic leading-snug text-wine-700">« {round.prompt} »</p>
     </QuestionCard>
   );
@@ -38,7 +38,7 @@ export function CompleteMySentence({ session, me, act, busy, clockOffset }: Game
   const writer = (p: Player) => (
     <>
       <Prompt round={round} k={`${state.index}-${p}`} />
-      <AnswerInput multiline busy={busy} resetKey={`${state.index}-${p}`} placeholder="Complète la phrase…" onSubmit={(v) => act('submit', { answer: v }, p)} />
+      <AnswerInput multiline label={`${PLAYER_NAMES[p]}, la suite de la phrase`} busy={busy} resetKey={`${state.index}-${p}`} placeholder="Complète la phrase…" onSubmit={(v) => act('submit', { answer: v }, p)} />
       <SkipButton busy={busy} label="Passer cette phrase" onClick={() => act('skipMine', {}, p)} />
     </>
   );
@@ -70,7 +70,7 @@ export function CompleteMySentence({ session, me, act, busy, clockOffset }: Game
               <Check className="mx-auto mb-2 h-6 w-6 text-emerald-500" />
               <p className="font-semibold text-wine-700">{round.skipped[me] ? 'Phrase passée.' : `Ta réponse : « ${round.answers[me]} »`}</p>
               {round.submitted[other] ? (
-                <p className="mt-2 text-sm text-ink/60">{PLAYER_NAMES[other]} a répondu aussi.</p>
+                <p className="mt-2 text-sm text-ink/70">{PLAYER_NAMES[other]} a répondu aussi.</p>
               ) : (
                 <WaitingFor player={other} text={`${PLAYER_NAMES[other]} écrit`} />
               )}
@@ -119,7 +119,7 @@ export function CompleteMySentence({ session, me, act, busy, clockOffset }: Game
             <div className="h-2.5 overflow-hidden rounded-full bg-blush-100">
               <motion.div className="h-full rounded-full bg-wine-gradient" initial={{ width: 0 }} animate={{ width: `${Math.max(similarity, 4)}%` }} transition={{ delay: 0.8, duration: 1 }} />
             </div>
-            <p className="mt-2 text-xs text-ink/50">Le jeu ne comprend pas toutes les nuances : à vous de trancher.</p>
+            <p className="mt-2 text-xs text-ink/70">Le jeu ne comprend pas toutes les nuances : à vous de trancher.</p>
           </div>
           <VerdictButtons
             busy={busy}

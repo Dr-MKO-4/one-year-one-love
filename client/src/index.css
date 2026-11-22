@@ -1,8 +1,8 @@
-@import '@fontsource-variable/nunito';
-@import '@fontsource/playfair-display/500.css';
-@import '@fontsource/playfair-display/700.css';
-@import '@fontsource/playfair-display/700-italic.css';
-@import '@fontsource/great-vibes/400.css';
+@import '@fontsource/young-serif/400.css';
+@import '@fontsource-variable/instrument-sans';
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/literata/wght-italic.css';
+@import '@fontsource/la-belle-aurore/400.css';
 
 @tailwind base;
 @tailwind components;
@@ -21,7 +21,11 @@
     min-height: 100dvh;
   }
   h1, h2, h3 {
-    @apply font-display text-wine-700;
+    @apply font-display font-normal text-wine-800;
+  }
+  /* Young Serif n'a qu'une graisse : pas de gras simulé par le navigateur. */
+  h1, h2, h3, .font-display, .font-script {
+    font-synthesis: none;
   }
   ::selection {
     @apply bg-blush-200 text-wine-800;

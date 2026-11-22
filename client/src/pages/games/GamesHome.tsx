@@ -53,7 +53,7 @@ export function GamesHome() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate font-bold text-wine-700">{GAMES[s.gameId].title}</p>
-                  <p className="flex items-center gap-1 text-xs text-ink/60">
+                  <p className="flex items-center gap-1 text-xs text-ink/70">
                     {s.players.map((p) => (
                       <Avatar key={p} player={p} size={16} />
                     ))}

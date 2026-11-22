@@ -11,9 +11,11 @@ export default {
         ink: '#3A1C27',
       },
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
-        script: ['"Great Vibes"', 'cursive'],
-        sans: ['"Nunito Variable"', 'Nunito', 'system-ui', 'sans-serif'],
+        // Titres : serif chaleureux ; texte : sans sobre ; lettre : serif de lecture ; signature : écriture manuscrite.
+        display: ['"Young Serif"', 'Georgia', 'serif'],
+        letter: ['"Literata Variable"', 'Georgia', 'serif'],
+        script: ['"La Belle Aurore"', 'cursive'],
+        sans: ['"Instrument Sans Variable"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         soft: '0 10px 30px -12px rgba(110, 29, 54, 0.25)',

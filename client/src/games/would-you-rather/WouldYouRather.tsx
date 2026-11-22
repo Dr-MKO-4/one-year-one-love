@@ -75,7 +75,7 @@ export function WouldYouRather({ session, me, act, busy }: GameProps<'would-you-
             </motion.div>
             <p className="font-semibold text-wine-700">Ton choix est gardé secret.</p>
             {round.choices[other] ? (
-              <p className="mt-2 text-sm text-ink/60">{PLAYER_NAMES[other]} a aussi choisi : révélation…</p>
+              <p className="mt-2 text-sm text-ink/70">{PLAYER_NAMES[other]} a aussi choisi : révélation…</p>
             ) : (
               <WaitingFor player={other} text={`${PLAYER_NAMES[other]} choisit`} />
             )}
@@ -95,7 +95,7 @@ export function WouldYouRather({ session, me, act, busy }: GameProps<'would-you-
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative mb-5 text-center">
         <HeartBurst show={same} />
         <p className="font-display text-3xl font-bold text-wine-700">{same ? 'Même choix !' : 'Choix différents'}</p>
-        <p className="text-sm text-ink/60">{same ? '+10 points communs' : 'C’est aussi ça, la richesse d’un couple.'}</p>
+        <p className="text-sm text-ink/70">{same ? '+10 points communs' : 'C’est aussi ça, la richesse d’un couple.'}</p>
       </motion.div>
       <div className="mb-5 grid grid-cols-2 gap-3">
         {PLAYERS.map((p, i) => (
@@ -113,7 +113,7 @@ export function WouldYouRather({ session, me, act, busy }: GameProps<'would-you-
             <p className="font-display text-lg font-bold text-wine-700">{label(round.choices[p])}</p>
             {round.reasons[p] && (
               <p className="mt-2 flex gap-1 text-sm italic text-ink/70">
-                <MessageCircleHeart className="h-4 w-4 shrink-0 text-blush-400" /> {round.reasons[p]}
+                <MessageCircleHeart className="h-4 w-4 shrink-0 text-wine-600" /> {round.reasons[p]}
               </p>
             )}
           </motion.div>

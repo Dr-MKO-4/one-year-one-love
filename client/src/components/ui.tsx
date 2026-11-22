@@ -1,7 +1,7 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform, type HTMLMotionProps } from 'framer-motion';
-import { Heart, X } from 'lucide-react';
+import { Heart, MoreHorizontal, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 /**
@@ -109,7 +109,7 @@ export function ScoreRing({
           <span className="font-display text-3xl font-bold text-wine-700" style={{ fontSize: size / 4 }}>
             <AnimatedNumber value={value} />
           </span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-wine-500/70">/ 100</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-wine-700">/ 100</span>
         </div>
       </div>
       {label && <span className="text-sm font-semibold text-wine-700">{label}</span>}
@@ -244,6 +244,8 @@ export function SectionTitle({ kicker, title, children }: { kicker?: string; tit
 
 /** Pluie de confettis en forme de cœurs pour les fins de partie. */
 export function celebrate(intensity: 'soft' | 'big' = 'big') {
+  // Mouvement réduit : pas de confettis.
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const heart = confetti.shapeFromPath({ path: 'M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z' });
   const colors = ['#E77C96', '#D85A7B', '#9E2F4F', '#EBCB97', '#F9C5D0'];
   const fire = (ratio: number, opts: confetti.Options) =>
@@ -266,5 +268,63 @@ export function Empty({ icon, title, children }: { icon: ReactNode; title: strin
       <h3 className="text-lg font-bold">{title}</h3>
       {children && <div className="text-sm text-ink/70">{children}</div>}
     </motion.div>
+  );
+}
+
+/** Menu d'actions secondaires d'une ligne (Plus…). */
+export function RowMenu({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ label: string; icon: typeof Heart; onClick: () => void; danger?: boolean }>;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    ref.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-label={label}
+        className="flex min-h-[40px] items-center gap-1 rounded-full px-3 text-sm font-semibold text-ink/80 hover:bg-blush-50"
+      >
+        <MoreHorizontal className="h-5 w-5" /> <span className="hidden sm:inline">Plus</span>
+      </button>
+      {open && (
+        <div id={menuId} role="menu" className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-2xl border border-blush-100 bg-white py-1 shadow-soft">
+          {items.map((it) => (
+            <button
+              key={it.label}
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+              className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold hover:bg-blush-50 focus:bg-blush-50 ${it.danger ? 'text-wine-700' : 'text-ink/85'}`}
+            >
+              <it.icon className="h-4 w-4" /> {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

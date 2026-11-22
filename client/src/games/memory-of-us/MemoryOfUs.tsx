@@ -12,7 +12,7 @@ function Face({ side }: { side: MemorySide }) {
   const Icon = ICONS[side.kind];
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-2xl bg-white p-2 text-center">
-      <Icon className="h-5 w-5 shrink-0 text-blush-500" />
+      <Icon className="h-5 w-5 shrink-0 text-wine-600" />
       <span className="line-clamp-4 text-[11px] font-bold leading-tight text-wine-700 sm:text-sm">{side.value}</span>
     </div>
   );
@@ -97,12 +97,12 @@ export function MemoryOfUs({ session, me, act, busy, clockOffset }: GameProps<'m
 
   return (
     <div className="relative">
-      <div className="mb-4 flex items-center justify-between text-sm font-semibold text-wine-600">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm font-semibold text-wine-700">
         <span className="chip">
           <Sparkles className="h-3.5 w-3.5" /> Niveau {state.level + 1} / {state.levels.length}
         </span>
         <span>
-          {found} / {state.totalPairs} paires
+          Plateau : {state.cards.filter((c) => c.matched).length / 2} / {state.cards.length / 2} paires · Partie : {found} / {state.totalPairs}
         </span>
         {!state.timeLimitSec && <Elapsed startedAt={state.startedAt} offset={clockOffset} />}
       </div>
@@ -139,7 +139,7 @@ export function MemoryOfUs({ session, me, act, busy, clockOffset }: GameProps<'m
               <Avatar player={p} size={32} active={p === actor} />
               <div className="text-xs">
                 <p className="font-bold text-wine-700">{PLAYER_NAMES[p]}</p>
-                <p className="text-ink/60">
+                <p className="text-ink/70">
                   {state.pairsFound[p] ?? 0} paires · {state.attempts[p] ?? 0} essais
                 </p>
               </div>
@@ -152,7 +152,7 @@ export function MemoryOfUs({ session, me, act, busy, clockOffset }: GameProps<'m
         {levelUp && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-cream/60 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.3, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 1.6, opacity: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 12 }} className="text-center">
-              <p className="font-script text-4xl text-blush-500">Bravo !</p>
+              <p className="font-script text-4xl text-wine-600">Bravo !</p>
               <p className="font-display text-5xl font-bold text-wine-700">Niveau {state.level + 1}</p>
               <p className="mt-2 font-semibold text-wine-500">Plus de cartes, plus de souvenirs</p>
             </motion.div>

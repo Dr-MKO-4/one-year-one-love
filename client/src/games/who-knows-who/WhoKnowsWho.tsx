@@ -32,8 +32,8 @@ export function WhoKnowsWho({ session, me, act, busy }: GameProps<'who-knows-who
     <QuestionCard
       k={`${state.index}-${state.phase === 'validate' ? 'v' : 'q'}`}
       kicker={
-        <span className="flex items-center gap-2 text-sm font-semibold text-wine-500">
-          <Avatar player={round.subject} size={26} /> {subject} demande :
+        <span className="flex items-center gap-2 text-sm font-semibold text-wine-700">
+          <Avatar player={round.subject} size={26} /> Question sur {subject}
         </span>
       }
     >
@@ -55,14 +55,14 @@ export function WhoKnowsWho({ session, me, act, busy }: GameProps<'who-knows-who
 
       {state.phase === 'reference' && (
         <>
-          <TurnBanner player={round.subject} me={me} shared={shared} text={`${subject} écrit sa vraie réponse en secret`} />
+          <TurnBanner player={round.subject} me={me} shared={shared} text={shared ? `Au tour de ${subject} de répondre en secret` : me === round.subject ? 'À toi : ta vraie réponse, en secret' : `${subject} répond en secret`} />
           {canActFor(session, me, round.subject) ? (
             <HandOff to={round.subject} id={`ref-${state.index}`}>
               {question}
               <p className="mb-3 flex items-center gap-2 text-sm text-ink/70">
                 <Lock className="h-4 w-4 text-wine-500" /> Ta réponse sera enregistrée comme référence pour les prochaines parties.
               </p>
-              <AnswerInput secret busy={busy} resetKey={`ref-${state.index}`} placeholder="Ta vraie réponse…" onSubmit={(v) => act('reference', { answer: v }, round.subject)} />
+              <AnswerInput secret label={`${subject}, ta vraie réponse (gardée secrète)`} busy={busy} resetKey={`ref-${state.index}`} placeholder="Ta vraie réponse…" onSubmit={(v) => act('reference', { answer: v }, round.subject)} />
             </HandOff>
           ) : (
             <>
@@ -79,7 +79,7 @@ export function WhoKnowsWho({ session, me, act, busy }: GameProps<'who-knows-who
           {canActFor(session, me, round.guesser) ? (
             <HandOff to={round.guesser} id={`guess-${state.index}`}>
               {question}
-              <AnswerInput busy={busy} resetKey={`guess-${state.index}`} placeholder={`Que répondrait ${subject} ?`} onSubmit={(v) => act('guess', { answer: v }, round.guesser)} />
+              <AnswerInput label={`${PLAYER_NAMES[round.guesser]}, que répondrait ${subject} ?`} busy={busy} resetKey={`guess-${state.index}`} placeholder="Ta réponse…" onSubmit={(v) => act('guess', { answer: v }, round.guesser)} />
             </HandOff>
           ) : (
             <>

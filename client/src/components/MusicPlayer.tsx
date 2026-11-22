@@ -95,9 +95,9 @@ export function HeaderMusic() {
   if (m.blocked) return <JoinListening compact />;
   return (
     <div className="flex items-center rounded-full border border-blush-100 bg-white">
-      <button onClick={() => m.setSheetOpen(true)} className="flex max-w-[200px] items-center gap-2 rounded-full py-1.5 pl-3 pr-1 text-left" aria-label="Ouvrir la playlist">
+      <button onClick={() => m.setSheetOpen(true)} className="flex max-w-[200px] items-center gap-2 rounded-full py-1.5 pl-3 pr-1 text-left" title={m.current ? `${m.current.title} · ${m.current.artist}` : undefined} aria-label="Ouvrir la playlist">
         {m.playing ? <Equalizer active /> : <ListMusic className="h-4 w-4 text-wine-600" />}
-        <span className="truncate text-xs font-bold text-wine-800">{m.current?.title ?? 'Notre playlist'}</span>
+        <span className="hidden truncate text-xs font-bold text-wine-800 xl:inline">{m.current?.title ?? 'Notre playlist'}</span>
       </button>
       <PlayPause size="sm" />
       <NextButton size="sm" />
@@ -227,7 +227,7 @@ export function MusicSheet() {
                         <span className="block truncate text-sm font-bold text-wine-800">{t.title}</span>
                         <span className="block truncate text-xs text-ink/70">{t.artist}</span>
                       </span>
-                      {t.durationSec ? <span className="text-xs tabular-nums text-ink/60">{fmt(t.durationSec)}</span> : null}
+                      {t.durationSec ? <span className="text-xs tabular-nums text-ink/70">{fmt(t.durationSec)}</span> : null}
                     </button>
                   </li>
                 );
