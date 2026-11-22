@@ -230,4 +230,6 @@ export const LETTER = {
     'Il y a un an, nous commencions à écrire notre histoire. Ce site rassemble nos souvenirs, nos rires et quelques jeux pour continuer à nous découvrir. ' +
     'Merci pour chaque jour de cette première année.',
   signature: 'Miguel',
+  // Brouillon : invisible sur l'accueil tant que Miguel ne l'a pas publié.
+  published: false,
 };

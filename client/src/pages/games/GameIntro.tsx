@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, Play, Settings2 } from 'lucide-react';
+import { ArrowLeft, Play, Settings2 } from 'lucide-react';
 import { GAMES, GAME_IDS, MODE_LABELS, PLAYERS, type Difficulty, type GameId, type PlayMode } from '@shared/types';
 import { useMe } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
 import { api } from '@/services/api';
 import { GAME_VISUALS } from '@/games/registry';
 import { DeviceSelector, DifficultySelector, PlayerSelector, Segmented } from '@/components/games/selectors';
-import { Btn, Page, rise, stagger } from '@/components/ui';
+import { Btn, Page } from '@/components/ui';
 
 export function GameIntro() {
   const { gameId } = useParams();
@@ -56,84 +55,73 @@ export function GameIntro() {
         <ArrowLeft className="h-4 w-4" /> Tous les jeux
       </Link>
 
-      <motion.section
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-br ${v.gradient} p-7 text-white shadow-glow`}
-      >
-        {Array.from({ length: 6 }, (_, i) => (
-          <motion.span
-            key={i}
-            className="absolute"
-            style={{ left: `${10 + i * 16}%`, top: `${20 + (i % 3) * 25}%` }}
-            animate={{ y: [0, -12, 0], opacity: [0.15, 0.35, 0.15] }}
-            transition={{ repeat: Infinity, duration: 3 + i * 0.4, delay: i * 0.2 }}
-          >
-            <Heart className="h-6 w-6 fill-white/30 text-white/30" />
-          </motion.span>
-        ))}
-        <motion.div initial={{ rotate: -30, scale: 0 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }} className="relative mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white/20 backdrop-blur">
-          <Icon className="h-8 w-8" />
-        </motion.div>
-        <h1 className="relative font-display text-4xl font-bold text-white">{game.title}</h1>
-        <p className="relative mt-2 text-white/85">{game.objective}</p>
-        <div className="relative mt-4 flex flex-wrap gap-2 text-xs font-bold">
-          <span className="rounded-full bg-white/20 px-3 py-1">{game.difficultyLabel}</span>
-          <span className="rounded-full bg-white/20 px-3 py-1">{game.modes.map((m) => MODE_LABELS[m]).join(' ou ')}</span>
-          <span className="rounded-full bg-white/20 px-3 py-1">{game.scoreLabel}</span>
+      <section className={`rounded-3xl bg-gradient-to-br ${v.gradient} p-6 text-white`}>
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+            <Icon className="h-6 w-6" />
+          </span>
+          <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">{game.title}</h1>
         </div>
-      </motion.section>
+        <p className="mt-3 text-white/90">{game.objective}</p>
+        <p className="mt-2 text-sm font-semibold text-white/85">
+          {game.needsBoth ? `À deux · ${game.modes.map((m) => MODE_LABELS[m]).join(' ou ')}` : 'À deux ou en solo'}
+        </p>
+      </section>
 
-      <motion.section variants={stagger} initial="hidden" animate="show" className="card mt-6 p-6">
-        <h2 className="mb-3 text-xl font-bold">Les règles</h2>
-        <ol className="space-y-3">
-          {game.rules.map((r, i) => (
-            <motion.li key={i} variants={rise} className="flex gap-3 text-sm leading-relaxed text-ink/80">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blush-100 text-xs font-bold text-wine-600">{i + 1}</span>
-              {r}
-            </motion.li>
-          ))}
-        </ol>
-      </motion.section>
-
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card mt-6 space-y-5 p-6">
+      <section className="card mt-5 space-y-5 p-6">
         <h2 className="flex items-center gap-2 text-xl font-bold">
-          <Settings2 className="h-5 w-5" /> Configuration
+          <Settings2 className="h-5 w-5" /> Réglages de la partie
         </h2>
         {game.modes.length > 1 && (
-          <div>
+          <div role="group" aria-label="Mode de jeu">
             <span className="label">Mode de jeu</span>
             <Segmented layoutId="mode" value={mode} onChange={setMode} options={game.modes.map((m) => ({ value: m, label: MODE_LABELS[m] }))} />
           </div>
         )}
         {mode === 'solo' ? (
-          <div>
+          <div role="group" aria-label="Qui joue">
             <span className="label">Qui joue ?</span>
             <PlayerSelector value={soloPlayer} onChange={setSoloPlayer} />
           </div>
         ) : (
-          <div>
+          <div role="group" aria-label="Appareils">
             <span className="label">Appareils</span>
             <DeviceSelector shared={shared} onChange={setShared} />
           </div>
         )}
-        <div>
+        <div role="group" aria-label="Difficulté">
           <span className="label">Difficulté</span>
           <DifficultySelector value={difficulty} onChange={setDifficulty} />
         </div>
+        <Btn className="btn-primary w-full text-lg" disabled={busy} onClick={start}>
+          <Play className="h-5 w-5" /> {busy ? 'Préparation…' : 'Commencer la partie'}
+        </Btn>
+        {!shared && mode !== 'solo' && <p className="text-center text-sm text-ink/70">Ton partenaire reçoit une invitation s’il ou elle a le site ouvert sur son téléphone.</p>}
         {count !== null && (
-          <p className="text-xs text-ink/60">
-            {count} élément{count > 1 ? 's' : ''} actif{count > 1 ? 's' : ''} dans la banque.{' '}
-            <Link to={`/configuration?jeu=${game.id}`} className="font-semibold text-wine-600 underline">
+          <p className="text-center text-xs text-ink/65">
+            {count} {count > 1 ? 'questions actives' : 'question active'} ·{' '}
+            <Link to={`/configuration?jeu=${game.id}`} className="font-semibold text-wine-700 underline">
               Modifier les contenus
             </Link>
           </p>
         )}
-        <Btn className="btn-primary w-full text-lg" disabled={busy} onClick={start}>
-          <Play className="h-5 w-5" /> {busy ? 'Préparation…' : 'Commencer la partie'}
-        </Btn>
-        {!shared && mode !== 'solo' && <p className="text-center text-xs text-ink/50">Ton partenaire recevra une invitation sur son téléphone.</p>}
-      </motion.section>
+      </section>
+
+      <details open className="card group mt-5 p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-xl font-bold text-wine-700">
+          Les règles
+          <span className="text-sm font-semibold text-wine-600 group-open:hidden">Afficher</span>
+          <span className="hidden text-sm font-semibold text-wine-600 group-open:inline">Masquer</span>
+        </summary>
+        <ol className="mt-4 space-y-3">
+          {game.rules.map((r, i) => (
+            <li key={i} className="flex gap-3 text-sm leading-relaxed text-ink/85">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blush-100 text-xs font-bold text-wine-700">{i + 1}</span>
+              {r}
+            </li>
+          ))}
+        </ol>
+      </details>
     </Page>
   );
 }

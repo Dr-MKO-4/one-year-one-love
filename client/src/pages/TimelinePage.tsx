@@ -24,7 +24,7 @@ export function TimelinePage() {
           Ajoute des moments depuis la configuration.
         </Empty>
       ) : (
-        <div ref={ref} className="relative pl-10 sm:pl-0">
+        <div ref={ref} className="relative overflow-x-clip pl-9 sm:pl-0">
           <div className="absolute bottom-0 left-4 top-0 w-1 rounded-full bg-blush-100 sm:left-1/2 sm:-translate-x-1/2" />
           <motion.div style={{ scaleY: line }} className="absolute bottom-0 left-4 top-0 w-1 origin-top rounded-full bg-wine-gradient sm:left-1/2 sm:-translate-x-1/2" />
           <ul className="space-y-10">
@@ -36,24 +36,23 @@ export function TimelinePage() {
                     initial={{ scale: 0.3, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true, margin: '-80px' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className="absolute -left-[34px] top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-glow sm:left-1/2 sm:-translate-x-1/2"
+                    transition={{ duration: 0.25 }}
+                    className="absolute -left-[34px] top-5 flex h-8 w-8 items-center justify-center rounded-full border border-blush-200 bg-white sm:left-1/2 sm:-translate-x-1/2"
                   >
                     <Heart className="h-4 w-4 fill-wine-500 text-wine-500" />
                   </motion.span>
                   <motion.article
-                    initial={{ opacity: 0, x: left ? -60 : 60, rotate: left ? -3 : 3 }}
-                    whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-                    viewport={{ once: true, margin: '-80px' }}
-                    transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-                    whileHover={{ y: -4 }}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
                     className="card w-full overflow-hidden sm:w-[calc(50%-2.5rem)]"
                   >
                     {e.photoId && <img src={photoUrl(e.photoId)} alt="" loading="lazy" className="h-48 w-full object-cover" />}
                     <div className="p-5">
-                      <p className="font-script text-2xl text-blush-500">{e.date}</p>
+                      <p className="text-sm font-bold uppercase tracking-wider text-wine-600">{e.date}</p>
                       <h2 className="text-xl font-bold">{e.title}</h2>
-                      {e.description && <p className="mt-2 text-sm leading-relaxed text-ink/75">{e.description}</p>}
+                      {e.description && <p className="mt-2 text-sm leading-relaxed text-ink/80">{e.description}</p>}
                     </div>
                   </motion.article>
                 </li>

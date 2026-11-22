@@ -149,7 +149,7 @@ export function GamePlay() {
         ) : (
           <motion.div key="play" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Component session={session as SessionDTO<GameId>} me={me} act={act} busy={busy} clockOffset={offset} />
-            <button onClick={() => setConfirmQuit(true)} className="mx-auto mt-10 flex items-center gap-1 text-xs font-semibold text-ink/40 hover:text-wine-600">
+            <button onClick={() => setConfirmQuit(true)} className="mx-auto mt-10 flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-ink/75 hover:bg-blush-50 hover:text-wine-700">
               <XCircle className="h-4 w-4" /> Interrompre la partie
             </button>
           </motion.div>

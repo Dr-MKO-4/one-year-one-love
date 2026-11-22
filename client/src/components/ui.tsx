@@ -1,17 +1,23 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform, type HTMLMotionProps } from 'framer-motion';
 import { Heart, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-/** Transition de page commune. */
+/**
+ * Transition de page commune : un simple fondu.
+ * Pas de filtre ni de transformation durable : ils créeraient un repère de positionnement
+ * pour les éléments fixes (dialogues, superpositions) rendus dans la page.
+ * Le bas de page réserve la place de la barre mobile (navigation + lecteur).
+ */
 export function Page({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <motion.main
-      initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -16, filter: 'blur(6px)' }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className={`mx-auto w-full max-w-3xl px-4 pb-40 pt-6 sm:px-6 ${className}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className={`mx-auto w-full max-w-3xl px-4 pb-44 pt-6 sm:px-6 md:pb-16 ${className}`}
     >
       {children}
     </motion.main>
@@ -20,11 +26,11 @@ export function Page({ children, className = '' }: { children: ReactNode; classN
 
 export const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.04 } },
 };
 export const rise = {
-  hidden: { opacity: 0, y: 24, scale: 0.97 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 260, damping: 24 } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
 };
 
 /** Bouton avec micro-interactions (rebond au toucher). */
@@ -111,38 +117,109 @@ export function ScoreRing({
   );
 }
 
-export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
-  return (
+/** Dialogue modal accessible, rendu au niveau de la fenêtre (portail). */
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  /** Actions principales, toujours visibles en bas du panneau. */
+  footer?: ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusables = () =>
+      Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((el) => !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+    // Focus sur le premier champ (ou le panneau) à l'ouverture.
+    const t = setTimeout(() => {
+      const first = focusables().find((el) => el.tagName !== 'BUTTON') ?? focusables()[0];
+      (first ?? panelRef.current)?.focus();
+    }, 50);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCloseRef.current();
+      } else if (e.key === 'Tab') {
+        const list = focusables();
+        if (!list.length) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      opener?.focus?.();
+    };
+  }, [open]);
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-wine-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-wine-900/45 sm:items-center sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
-            className="card max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-b-none bg-white/95 p-6 sm:rounded-3xl"
-            initial={{ y: 80, opacity: 0, scale: 0.98 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            aria-labelledby={title ? titleId : undefined}
+            tabIndex={-1}
+            className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-soft outline-none sm:max-h-[88dvh] sm:rounded-3xl"
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-center justify-between gap-4">
-              {title && <h3 className="text-xl font-bold">{title}</h3>}
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-blush-100 px-6 py-4">
+              {title && (
+                <h2 id={titleId} className="text-xl font-bold">
+                  {title}
+                </h2>
+              )}
               <button onClick={onClose} className="ml-auto rounded-full p-2 hover:bg-blush-50" aria-label="Fermer">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {children}
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+            {footer && <div className="safe-bottom shrink-0 border-t border-blush-100 bg-white px-6 py-4">{footer}</div>}
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -157,11 +234,11 @@ export function Loader({ label = 'Un instant…' }: { label?: string }) {
 
 export function SectionTitle({ kicker, title, children }: { kicker?: string; title: string; children?: ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-      {kicker && <p className="font-script text-2xl text-blush-500">{kicker}</p>}
-      <h1 className="text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>
-      {children && <div className="mt-2 text-ink/70">{children}</div>}
-    </motion.div>
+    <div className="mb-6">
+      {kicker && <p className="text-xs font-bold uppercase tracking-[0.18em] text-wine-600">{kicker}</p>}
+      <h1 className="mt-1 text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>
+      {children && <div className="mt-2 text-ink/80">{children}</div>}
+    </div>
   );
 }
 

@@ -39,7 +39,7 @@ export function TurnBanner({ player, me, shared, text }: { player: Player; me: P
       key={`${player}-${text}`}
       initial={{ opacity: 0, y: -12, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={`mb-4 flex items-center gap-3 rounded-2xl px-4 py-3 ${mine ? 'bg-wine-gradient text-white shadow-glow' : 'bg-white/80 text-wine-700'}`}
+      className={`mb-4 flex items-center gap-3 rounded-2xl px-4 py-3 ${mine ? 'bg-wine-600 text-white' : 'border border-blush-100 bg-white text-wine-800'}`}
     >
       <Avatar player={player} size={34} active={mine} />
       <span className="text-sm font-bold">
@@ -194,8 +194,8 @@ export function VerdictButtons({
   busy?: boolean;
 }) {
   const tones = {
-    good: 'bg-emerald-500 text-white',
-    mid: 'bg-gold-400 text-white',
+    good: 'bg-emerald-600 text-white',
+    mid: 'bg-gold-300 text-wine-900',
     bad: 'bg-white text-wine-700 border border-blush-200',
   };
   return (
@@ -281,8 +281,8 @@ export function ResultBadge({ result }: { result?: string }) {
     correct: ['Bonne réponse', 'bg-emerald-100 text-emerald-700'],
     done: ['Défi réussi', 'bg-emerald-100 text-emerald-700'],
     exact: ['Identique', 'bg-emerald-100 text-emerald-700'],
-    partial: ['Presque', 'bg-gold-300/50 text-gold-500'],
-    close: ['Proche', 'bg-gold-300/50 text-gold-500'],
+    partial: ['Presque', 'bg-gold-300/50 text-gold-700'],
+    close: ['Proche', 'bg-gold-300/50 text-gold-700'],
     incorrect: ['Pas cette fois', 'bg-blush-100 text-wine-600'],
     failed: ['Pas cette fois', 'bg-blush-100 text-wine-600'],
     different: ['Différent', 'bg-blush-100 text-wine-600'],

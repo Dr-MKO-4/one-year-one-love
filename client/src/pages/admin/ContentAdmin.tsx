@@ -78,7 +78,7 @@ function SideEditor({ side, onChange, photos }: { side: MemorySide; onChange: (s
         photos.length ? (
           <div className="grid max-h-40 grid-cols-4 gap-2 overflow-y-auto">
             {photos.map((p) => (
-              <button type="button" key={p.id} onClick={() => onChange({ kind: 'photo', value: p.id })} className={`overflow-hidden rounded-xl ${side.value === p.id ? 'ring-4 ring-wine-500' : ''}`}>
+              <button type="button" key={p.id} onClick={() => onChange({ kind: 'photo', value: p.id })} className={`overflow-hidden rounded-xl ${side.value === p.id ? 'ring-[3px] ring-inset ring-wine-600' : ''}`}>
                 <img src={photoUrl(p.id)} alt={p.caption ?? ''} className="aspect-square w-full object-cover" />
               </button>
             ))}
@@ -341,7 +341,7 @@ export function ContentAdmin() {
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         <span className="chip py-0.5">{DIFFICULTY_LABELS[it.difficulty]}</span>
                         {it.toConfirm && (
-                          <span className="chip bg-gold-300/40 py-0.5 text-gold-500">
+                          <span className="chip bg-gold-300/40 py-0.5 text-gold-700">
                             <AlertCircle className="h-3 w-3" /> À confirmer
                           </span>
                         )}
@@ -366,7 +366,21 @@ export function ContentAdmin() {
         </>
       )}
 
-      <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id ? 'Modifier' : `Ajouter à ${GAMES[gameId].title}`}>
+      <Modal
+        open={!!draft}
+        onClose={() => setDraft(null)}
+        title={draft?.id ? 'Modifier' : `Ajouter à ${GAMES[gameId].title}`}
+        footer={
+          <div className="grid grid-cols-2 gap-3">
+            <button className="btn-soft" onClick={() => setDraft(null)}>
+              Annuler
+            </button>
+            <Btn className="btn-primary" disabled={saving} onClick={save}>
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </Btn>
+          </div>
+        }
+      >
         {draft && (
           <div className="space-y-4">
             <DataForm gameId={gameId} draft={draft} photos={photos} set={(data) => setDraft({ ...draft, data })} />
@@ -387,9 +401,6 @@ export function ContentAdmin() {
                 <input type="checkbox" checked={draft.toConfirm} onChange={(e) => setDraft({ ...draft, toConfirm: e.target.checked })} className="h-5 w-5 accent-wine-500" /> À confirmer
               </label>
             </div>
-            <Btn className="btn-primary w-full" disabled={saving} onClick={save}>
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
-            </Btn>
           </div>
         )}
       </Modal>

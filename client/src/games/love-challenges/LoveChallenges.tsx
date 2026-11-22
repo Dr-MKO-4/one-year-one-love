@@ -57,7 +57,7 @@ export function LoveChallenges({ session, me, act, busy, clockOffset }: GameProp
               <Icon className="h-5 w-5" />
             </motion.span>
             <span className="chip">{CHALLENGE_CATEGORY_LABELS[round.category]}</span>
-            <span className="chip bg-gold-300/40 text-gold-500">{round.points} pts</span>
+            <span className="chip bg-gold-300/40 text-gold-700">{round.points} pts</span>
           </div>
         }
       >

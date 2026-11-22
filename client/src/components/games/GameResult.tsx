@@ -122,7 +122,7 @@ export function GameResult({ session }: { session: SessionDTO }) {
         {session.compatibility !== null && (
           <motion.div variants={rise} className="flex flex-col items-center gap-2">
             <ScoreRing value={session.compatibility} size={104} tone="gold" delay={0.9} />
-            <span className="text-sm font-bold text-gold-500">Compatibilité</span>
+            <span className="text-sm font-bold text-gold-700">Compatibilité</span>
           </motion.div>
         )}
       </motion.div>

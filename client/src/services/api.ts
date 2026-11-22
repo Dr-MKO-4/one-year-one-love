@@ -102,6 +102,8 @@ export interface Letter {
   title: string;
   body: string;
   signature: string;
+  /** Seule une lettre publiée s'affiche sur l'accueil. */
+  published?: boolean;
 }
 
 export const api = {

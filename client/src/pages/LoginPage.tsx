@@ -54,45 +54,32 @@ export function LoginPage() {
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4 py-10">
-      <FloatingHearts count={22} />
+      <FloatingHearts count={9} />
       <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 12 }}>
         <Heart className="h-16 w-16 animate-heartbeat fill-blush-400 text-blush-400 drop-shadow-lg" />
       </motion.div>
-      <h1 className="mt-4 text-center font-display text-4xl font-bold sm:text-5xl" aria-label={TITLE}>
-        {TITLE.split('').map((c, i) => (
-          <motion.span
-            key={i}
-            className="inline-block text-gradient animate-shimmer"
-            initial={{ opacity: 0, y: 30, rotateX: -90 }}
-            animate={{ opacity: 1, y: 0, rotateX: 0 }}
-            transition={{ delay: 0.3 + i * 0.04, type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            {c === ' ' ? ' ' : c}
-          </motion.span>
-        ))}
-      </h1>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="mt-2 font-script text-3xl text-blush-500">
+      <h1 className="mt-4 text-center font-display text-4xl font-bold text-wine-700 sm:text-5xl">{TITLE}</h1>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="mt-2 font-script text-3xl text-wine-500">
         22 novembre 2025 · 22 novembre 2026
       </motion.p>
 
       <div className="mt-10 w-full max-w-sm">
         <AnimatePresence mode="wait">
           {!who ? (
-            <motion.div key="who" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ delay: 1.3 }}>
-              <p className="mb-4 text-center font-semibold text-wine-700">Qui es-tu ?</p>
+            <motion.div key="who" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}>
+              <p className="mb-4 text-center font-semibold text-wine-800">Qui es-tu ?</p>
               <div className="grid grid-cols-2 gap-4">
                 {(['adele', 'miguel'] as Player[]).map((p, i) => (
                   <motion.button
                     key={p}
-                    initial={{ opacity: 0, y: 30, rotate: i ? 4 : -4 }}
-                    animate={{ opacity: 1, y: 0, rotate: 0 }}
-                    transition={{ delay: 1.4 + i * 0.1, type: 'spring' }}
-                    whileHover={{ y: -6, rotate: i ? 2 : -2 }}
-                    whileTap={{ scale: 0.94 }}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.25 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setWho(p)}
                     className="card flex flex-col items-center gap-3 p-6"
                   >
-                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-wine-gradient font-display text-2xl font-bold text-white shadow-glow">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-wine-600 font-display text-2xl font-bold text-white">
                       {PLAYER_NAMES[p][0]}
                     </span>
                     <span className="font-display text-xl font-bold text-wine-700">{PLAYER_NAMES[p]}</span>
@@ -107,8 +94,9 @@ export function LoginPage() {
               </button>
               <p className="text-center font-display text-2xl font-bold text-wine-700">Bonjour {PLAYER_NAMES[who]}</p>
               <p className="mt-1 flex items-center justify-center gap-1 text-sm text-ink/60">
-                <Lock className="h-3.5 w-3.5" /> Ton code secret
+                <Lock className="h-3.5 w-3.5" /> Ton code secret (au moins 4 chiffres)
               </p>
+              <p className="mt-1 text-center text-xs text-ink/65">La connexion se fait dès que le code est complet.</p>
               <motion.div animate={shake} className="my-6 flex justify-center gap-3">
                 {Array.from({ length: Math.max(4, pin.length) }, (_, i) => (
                   <motion.span

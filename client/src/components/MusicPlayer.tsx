@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Headphones, ListMusic, Pause, Play, Radio, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { Headphones, ListMusic, Pause, Play, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
 import { PLAYER_NAMES } from '@shared/types';
 import { useMusic } from '@/lib/music';
 
@@ -8,15 +10,16 @@ function fmt(s: number) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
+/** Petit égaliseur : seule animation du lecteur, et seulement quand le son joue. */
 function Equalizer({ active }: { active: boolean }) {
   return (
     <div className="flex h-4 items-end gap-[2px]" aria-hidden>
-      {[0, 1, 2, 3].map((i) => (
+      {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="w-[3px] rounded-full bg-blush-400"
-          animate={active ? { height: ['30%', '100%', '45%', '85%', '30%'] } : { height: '25%' }}
-          transition={active ? { duration: 1 + i * 0.15, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
+          className="w-[3px] rounded-full bg-wine-500"
+          animate={active ? { height: ['35%', '100%', '50%', '35%'] } : { height: '30%' }}
+          transition={active ? { duration: 1.1 + i * 0.2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
         />
       ))}
     </div>
@@ -28,192 +31,212 @@ function JoinListening({ compact = false }: { compact?: boolean }) {
   const m = useMusic();
   if (!m.blocked) return null;
   return (
-    <motion.button
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: [1, 1.06, 1], opacity: 1 }}
-      transition={{ scale: { repeat: Infinity, duration: 1.6 } }}
+    <button
       onClick={m.unblock}
-      className={`flex items-center gap-1.5 rounded-full bg-wine-gradient font-bold text-white shadow-glow ${compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full bg-wine-600 font-bold text-white ${compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}
     >
       <Headphones className="h-4 w-4" /> Rejoindre l’écoute
-    </motion.button>
+    </button>
   );
 }
 
-/** Lecteur flottant : la musique est partagée, chaque commande s'applique aux deux téléphones. */
-export function MusicPlayer({ hidePill = false }: { hidePill?: boolean }) {
+function PlayPause({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const m = useMusic();
-  const open = m.sheetOpen;
-  const setOpen = m.setSheetOpen;
+  const cls = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
+  return (
+    <button onClick={m.toggle} className="rounded-full p-2 text-wine-700 hover:bg-blush-50" aria-label={m.playing ? 'Mettre en pause pour nous deux' : 'Lancer pour nous deux'}>
+      {m.playing ? <Pause className={cls} /> : <Play className={cls} />}
+    </button>
+  );
+}
+
+function NextButton({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const m = useMusic();
+  const cls = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
+  return (
+    <button onClick={m.next} className="rounded-full p-2 text-wine-700 hover:bg-blush-50" aria-label="Chanson suivante pour nous deux">
+      <SkipForward className={cls} />
+    </button>
+  );
+}
+
+/** Barre de lecture mobile : intégrée au bloc de navigation, dans une zone réservée. */
+export function MobileMusicBar() {
+  const m = useMusic();
   if (!m.tracks.length) return null;
   const audible = m.playing && !m.blocked;
-
   return (
-    <>
-      {!hidePill && (
-        <motion.div
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6, type: 'spring', stiffness: 200, damping: 22 }}
-          className="fixed bottom-[84px] right-3 z-40 flex items-center gap-1 rounded-full border border-white/70 bg-white/85 p-1.5 pr-2 shadow-soft backdrop-blur-md sm:bottom-6 sm:right-6"
-        >
-          {m.blocked ? (
-            <JoinListening />
-          ) : (
-            <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full pl-1 pr-2" aria-label="Ouvrir la playlist">
-              <motion.div
-                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-wine-gradient"
-                animate={{ rotate: audible ? 360 : 0 }}
-                transition={audible ? { duration: 6, repeat: Infinity, ease: 'linear' } : { duration: 0.6 }}
-              >
-                <div className="absolute inset-[6px] rounded-full border border-white/30" />
-                <div className="h-2 w-2 rounded-full bg-cream" />
-              </motion.div>
-              <div className="hidden max-w-[140px] text-left sm:block">
-                <p className="truncate text-xs font-bold text-wine-700">{m.current?.title ?? 'Notre playlist'}</p>
-                <p className="truncate text-[11px] text-ink/60">{m.current?.artist ?? 'Appuie pour lancer'}</p>
-              </div>
-              <Equalizer active={audible} />
-            </button>
-          )}
-          <motion.button whileTap={{ scale: 0.85 }} onClick={m.toggle} className="rounded-full p-2 text-wine-600 hover:bg-blush-50" aria-label={m.playing ? 'Pause pour nous deux' : 'Lecture pour nous deux'}>
-            {m.playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.85, x: 4 }} onClick={m.next} className="rounded-full p-2 text-wine-600 hover:bg-blush-50" aria-label="Chanson suivante pour nous deux">
-            <SkipForward className="h-5 w-5" />
-          </motion.button>
-        </motion.div>
+    <div className="flex h-14 items-center gap-2 border-b border-blush-100 px-3">
+      <button onClick={() => m.setSheetOpen(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Ouvrir la playlist">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blush-100">
+          {audible ? <Equalizer active /> : <ListMusic className="h-4 w-4 text-wine-600" />}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-bold text-wine-800">{m.current?.title ?? 'Notre playlist'}</span>
+          <span className="block truncate text-xs text-ink/70">{m.current ? m.current.artist : 'Appuie sur lecture : elle démarre chez vous deux'}</span>
+        </span>
+      </button>
+      {m.blocked ? (
+        <JoinListening compact />
+      ) : (
+        <>
+          <PlayPause />
+          <NextButton />
+        </>
       )}
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="fixed inset-0 z-[70] flex items-end justify-center bg-wine-900/40 backdrop-blur-sm sm:items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setOpen(false)}
-          >
-            <motion.div
-              className="w-full max-w-md overflow-hidden rounded-t-[2rem] bg-cream shadow-soft sm:rounded-[2rem]"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative bg-wine-gradient px-6 pb-6 pt-4 text-white">
-                <button onClick={() => setOpen(false)} className="mx-auto mb-3 flex rounded-full p-1 text-white/80" aria-label="Fermer">
-                  <ChevronDown className="h-6 w-6" />
-                </button>
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[conic-gradient(from_0deg,#3D0F1E,#6E1D36,#3D0F1E,#55162A,#3D0F1E)] shadow-lg"
-                    animate={{ rotate: audible ? 360 : 0 }}
-                    transition={audible ? { duration: 5, repeat: Infinity, ease: 'linear' } : { duration: 0.8 }}
-                  >
-                    {[10, 16, 22].map((i) => (
-                      <div key={i} className="absolute rounded-full border border-white/10" style={{ inset: i / 2 }} />
-                    ))}
-                    <div className="h-6 w-6 rounded-full bg-blush-300" />
-                  </motion.div>
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 font-script text-2xl text-blush-200">
-                      <Radio className="h-4 w-4" /> On écoute ensemble
-                    </p>
-                    <p className="truncate font-display text-lg font-bold">{m.current?.title ?? 'Rien pour le moment'}</p>
-                    <p className="truncate text-sm text-white/70">{m.current?.artist ?? 'Lance un titre : il démarre chez vous deux'}</p>
-                    {m.updatedBy && <p className="mt-0.5 text-[11px] text-white/60">Dernière action : {PLAYER_NAMES[m.updatedBy]}</p>}
-                  </div>
-                </div>
-                <div className="mt-4 flex justify-center">
-                  <JoinListening compact />
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={m.duration || 0}
-                  step={1}
-                  value={Math.min(m.progress, m.duration || 0)}
-                  onChange={(e) => m.seek(Number(e.target.value))}
-                  className="mt-3 w-full accent-blush-300"
-                  aria-label="Position dans la chanson (pour nous deux)"
-                />
-                <div className="flex justify-between text-[11px] text-white/70">
-                  <span>{fmt(m.progress)}</span>
-                  <span>{fmt(m.duration)}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <button onClick={m.toggleShuffle} className={`rounded-full p-2 ${m.shuffle ? 'bg-white/20' : 'text-white/60'}`} aria-label="Lecture aléatoire" aria-pressed={m.shuffle}>
-                    <Shuffle className="h-5 w-5" />
-                  </button>
-                  <motion.button whileTap={{ scale: 0.85 }} onClick={m.prev} className="rounded-full p-2" aria-label="Précédente">
-                    <SkipBack className="h-7 w-7" />
-                  </motion.button>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={m.toggle} className="rounded-full bg-white p-4 text-wine-700 shadow-lg" aria-label={m.playing ? 'Pause' : 'Lecture'}>
-                    {m.playing ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 translate-x-0.5" />}
-                  </motion.button>
-                  <motion.button whileTap={{ scale: 0.85 }} onClick={m.next} className="rounded-full p-2" aria-label="Suivante">
-                    <SkipForward className="h-7 w-7" />
-                  </motion.button>
-                  <button onClick={m.toggleMute} className="rounded-full p-2" aria-label={m.muted ? 'Activer le son sur ce téléphone' : 'Couper le son sur ce téléphone'}>
-                    {m.muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                  </button>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={m.muted ? 0 : m.volume}
-                  onChange={(e) => m.setVolume(Number(e.target.value))}
-                  className="mt-2 w-full accent-blush-300"
-                  aria-label="Volume de ce téléphone"
-                />
-                <p className="text-center text-[10px] text-white/50">Le volume et la sourdine ne concernent que ce téléphone.</p>
-              </div>
-              <ul className="max-h-[40dvh] overflow-y-auto p-3">
-                {m.tracks.map((t, i) => {
-                  const active = t.id === m.current?.id;
-                  return (
-                    <motion.li key={t.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
-                      <button
-                        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-blush-50 ${active ? 'bg-blush-100' : ''}`}
-                        onClick={() => m.select(t.id)}
-                      >
-                        <span className="flex w-6 justify-center text-xs font-bold text-wine-500">{active && audible ? <Equalizer active /> : i + 1}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-wine-700">{t.title}</p>
-                          <p className="truncate text-xs text-ink/60">{t.artist}</p>
-                        </div>
-                        {t.durationSec ? <span className="text-xs tabular-nums text-ink/40">{fmt(t.durationSec)}</span> : null}
-                      </button>
-                    </motion.li>
-                  );
-                })}
-              </ul>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    </div>
   );
 }
 
-/** Bouton compact (en-tête des parties) : ouvre la playlist sans masquer le jeu. */
+/** Commandes compactes dans l'en-tête (ordinateur). */
+export function HeaderMusic() {
+  const m = useMusic();
+  if (!m.tracks.length) return null;
+  if (m.blocked) return <JoinListening compact />;
+  return (
+    <div className="flex items-center rounded-full border border-blush-100 bg-white">
+      <button onClick={() => m.setSheetOpen(true)} className="flex max-w-[200px] items-center gap-2 rounded-full py-1.5 pl-3 pr-1 text-left" aria-label="Ouvrir la playlist">
+        {m.playing ? <Equalizer active /> : <ListMusic className="h-4 w-4 text-wine-600" />}
+        <span className="truncate text-xs font-bold text-wine-800">{m.current?.title ?? 'Notre playlist'}</span>
+      </button>
+      <PlayPause size="sm" />
+      <NextButton size="sm" />
+    </div>
+  );
+}
+
+/** Bouton compact (en-tête des parties). */
 export function MusicButton() {
   const m = useMusic();
   if (!m.tracks.length) return null;
   if (m.blocked) return <JoinListening compact />;
   return (
-    <div className="flex items-center rounded-full bg-white/80">
-      <button onClick={() => m.setSheetOpen(true)} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" aria-label="Ouvrir la playlist">
-        <ListMusic className="h-4 w-4 text-wine-500" />
-        <Equalizer active={m.playing} />
+    <div className="flex items-center rounded-full border border-blush-100 bg-white">
+      <button onClick={() => m.setSheetOpen(true)} className="flex items-center gap-1.5 rounded-full py-1.5 pl-2.5 pr-1" aria-label="Ouvrir la playlist">
+        {m.playing ? <Equalizer active /> : <ListMusic className="h-4 w-4 text-wine-600" />}
       </button>
-      <motion.button whileTap={{ scale: 0.85 }} onClick={m.next} className="rounded-full py-1.5 pr-2.5 text-wine-600" aria-label="Chanson suivante pour nous deux">
-        <SkipForward className="h-4 w-4" />
-      </motion.button>
+      <NextButton size="sm" />
     </div>
+  );
+}
+
+/** Panneau de la playlist partagée (dialogue). */
+export function MusicSheet() {
+  const m = useMusic();
+  const open = m.sheetOpen;
+  const close = () => m.setSheetOpen(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const setOpenRef = useRef(m.setSheetOpen);
+  setOpenRef.current = m.setSheetOpen;
+
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const t = setTimeout(() => closeRef.current?.focus(), 50);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenRef.current(false);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('keydown', onKey);
+      opener?.focus?.();
+    };
+  }, [open]);
+
+  if (!m.tracks.length) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div className="fixed inset-0 z-[90] flex items-end justify-center bg-wine-900/45 sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Playlist partagée"
+            className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-cream shadow-soft sm:rounded-3xl"
+            initial={{ y: 60 }}
+            animate={{ y: 0 }}
+            exit={{ y: 60, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shrink-0 bg-wine-gradient px-5 pb-5 pt-4 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/75">On écoute ensemble</p>
+                  <p className="mt-1 truncate font-display text-xl font-bold">{m.current?.title ?? 'Rien pour le moment'}</p>
+                  <p className="truncate text-sm text-white/80">{m.current?.artist ?? 'Lance un titre : il démarre chez vous deux'}</p>
+                  {m.updatedBy && <p className="mt-1 text-xs text-white/70">Dernière action : {PLAYER_NAMES[m.updatedBy]}</p>}
+                </div>
+                <button ref={closeRef} onClick={close} className="flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold hover:bg-white/25">
+                  <X className="h-4 w-4" /> Fermer
+                </button>
+              </div>
+              <div className="mt-3 flex justify-center">
+                <JoinListening compact />
+              </div>
+
+              <label className="mt-3 block">
+                <span className="flex justify-between text-xs text-white/80">
+                  <span>Position (pour vous deux)</span>
+                  <span className="tabular-nums">
+                    {fmt(m.progress)} / {fmt(m.duration)}
+                  </span>
+                </span>
+                <input type="range" min={0} max={m.duration || 0} step={1} value={Math.min(m.progress, m.duration || 0)} onChange={(e) => m.seek(Number(e.target.value))} className="mt-1 w-full accent-blush-200" />
+              </label>
+
+              <div className="mt-2 flex items-center justify-between">
+                <button onClick={m.toggleShuffle} className={`rounded-full p-2 ${m.shuffle ? 'bg-white/25' : 'text-white/70'}`} aria-label="Lecture aléatoire" aria-pressed={m.shuffle}>
+                  <Shuffle className="h-5 w-5" />
+                </button>
+                <button onClick={m.prev} className="rounded-full p-2" aria-label="Précédente pour nous deux">
+                  <SkipBack className="h-7 w-7" />
+                </button>
+                <button onClick={m.toggle} className="rounded-full bg-white p-4 text-wine-700" aria-label={m.playing ? 'Mettre en pause pour nous deux' : 'Lancer pour nous deux'}>
+                  {m.playing ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 translate-x-0.5" />}
+                </button>
+                <button onClick={m.next} className="rounded-full p-2" aria-label="Suivante pour nous deux">
+                  <SkipForward className="h-7 w-7" />
+                </button>
+                <span className="w-9" aria-hidden />
+              </div>
+              <p className="mt-1 text-center text-xs text-white/75">Lecture, pause, position et changement de titre s’appliquent à vos deux téléphones.</p>
+
+              <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2">
+                <button onClick={m.toggleMute} className="rounded-full p-1" aria-label={m.muted ? 'Activer le son sur ce téléphone' : 'Couper le son sur ce téléphone'}>
+                  {m.muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </button>
+                <label className="flex flex-1 items-center gap-2">
+                  <span className="shrink-0 text-xs text-white/80">Volume de ce téléphone</span>
+                  <input type="range" min={0} max={1} step={0.05} value={m.muted ? 0 : m.volume} onChange={(e) => m.setVolume(Number(e.target.value))} className="w-full accent-blush-200" />
+                </label>
+              </div>
+            </div>
+            <ul className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Titres">
+              {m.tracks.map((t, i) => {
+                const active = t.id === m.current?.id;
+                return (
+                  <li key={t.id}>
+                    <button
+                      className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-blush-50 ${active ? 'bg-blush-100' : ''}`}
+                      onClick={() => m.select(t.id)}
+                      aria-current={active ? 'true' : undefined}
+                    >
+                      <span className="flex w-6 justify-center text-xs font-bold text-wine-600">{active && m.playing && !m.blocked ? <Equalizer active /> : i + 1}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold text-wine-800">{t.title}</span>
+                        <span className="block truncate text-xs text-ink/70">{t.artist}</span>
+                      </span>
+                      {t.durationSec ? <span className="text-xs tabular-nums text-ink/60">{fmt(t.durationSec)}</span> : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 }

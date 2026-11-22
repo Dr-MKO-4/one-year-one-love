@@ -33,15 +33,24 @@ export function GamesHome() {
         Six jeux pour célébrer votre première année. Ici, la complicité compte plus que la compétition.
       </SectionTitle>
 
+      <div className="-mt-2 mb-6 flex flex-wrap gap-2">
+        <Link to="/jeux/historique" className="inline-flex items-center gap-1.5 rounded-full border border-blush-200 bg-white px-4 py-2 text-sm font-semibold text-wine-800 hover:bg-blush-50">
+          <History className="h-4 w-4" /> Historique et reprise
+        </Link>
+        <Link to="/jeux/tableau-de-bord" className="inline-flex items-center gap-1.5 rounded-full border border-blush-200 bg-white px-4 py-2 text-sm font-semibold text-wine-800 hover:bg-blush-50">
+          <BarChart3 className="h-4 w-4" /> Nos scores
+        </Link>
+      </div>
+
       {ongoing.length > 0 && (
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h2 className="mb-3 text-lg font-bold">Parties en cours</h2>
           <div className="flex snap-x gap-3 overflow-x-auto pb-2">
             {ongoing.map((s) => (
               <Link key={s.id} to={`/partie/${s.id}`} className="card flex min-w-[240px] snap-start items-center gap-3 p-4">
-                <motion.span animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.8 }} className="flex h-10 w-10 items-center justify-center rounded-full bg-wine-gradient text-white">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-wine-600 text-white">
                   <Play className="h-4 w-4 translate-x-0.5" />
-                </motion.span>
+                </span>
                 <div className="min-w-0">
                   <p className="truncate font-bold text-wine-700">{GAMES[s.gameId].title}</p>
                   <p className="flex items-center gap-1 text-xs text-ink/60">
@@ -58,19 +67,11 @@ export function GamesHome() {
       )}
 
       <motion.section variants={stagger} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {GAME_IDS.map((id, i) => (
-          <GameCard key={id} gameId={id} index={i} best={dash?.perGame.find((g) => g.gameId === id)?.best} />
+        {GAME_IDS.map((id) => (
+          <GameCard key={id} gameId={id} best={dash?.perGame.find((g) => g.gameId === id)?.best} />
         ))}
       </motion.section>
 
-      <div className="mt-8 grid grid-cols-2 gap-3">
-        <Link to="/jeux/tableau-de-bord" className="btn-white">
-          <BarChart3 className="h-5 w-5" /> Tableau de bord
-        </Link>
-        <Link to="/jeux/historique" className="btn-white">
-          <History className="h-5 w-5" /> Historique
-        </Link>
-      </div>
     </Page>
   );
 }

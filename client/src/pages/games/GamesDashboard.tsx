@@ -13,7 +13,7 @@ import { Avatar } from '@/components/games/common';
 function Sparkline({ points }: { points: Array<{ date: string; couple: number | null }> }) {
   const [hover, setHover] = useState<number | null>(null);
   const data = points.filter((p) => p.couple !== null) as Array<{ date: string; couple: number }>;
-  if (data.length < 2) return <p className="text-xs text-ink/50">Encore {2 - data.length} partie(s) pour voir la courbe.</p>;
+  if (data.length < 2) return <p className="text-xs text-ink/50">{data.length === 1 ? 'Encore 1 partie pour voir la courbe.' : 'La courbe apparaît après 2 parties.'}</p>;
   const W = 240;
   const H = 56;
   const pad = 6;
@@ -82,7 +82,7 @@ export function GamesDashboard() {
         ))}
         <motion.div variants={rise} className="col-span-2 flex flex-col items-center gap-2 sm:col-span-1">
           <ScoreRing value={dash.compatibility} size={110} tone="gold" delay={0.5} />
-          <span className="text-sm font-bold text-gold-500">Compatibilité</span>
+          <span className="text-sm font-bold text-gold-700">Compatibilité</span>
         </motion.div>
       </motion.section>
 
@@ -100,7 +100,7 @@ export function GamesDashboard() {
       </motion.section>
 
       {dash.best && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-4 flex items-center gap-4 rounded-3xl bg-wine-gradient p-5 text-white shadow-glow">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-4 flex items-center gap-4 rounded-3xl bg-wine-gradient p-5 text-white">
           <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 3 }}>
             <Award className="h-10 w-10 text-gold-300" />
           </motion.div>

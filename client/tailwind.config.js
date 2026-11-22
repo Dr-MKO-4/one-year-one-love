@@ -7,7 +7,7 @@ export default {
         cream: '#FFF8F3',
         blush: { 50: '#FFF1F3', 100: '#FDE2E7', 200: '#F9C5D0', 300: '#F2A2B4', 400: '#E77C96', 500: '#D85A7B' },
         wine: { 500: '#9E2F4F', 600: '#862541', 700: '#6E1D36', 800: '#55162A', 900: '#3D0F1E' },
-        gold: { 300: '#EBCB97', 400: '#DDB273', 500: '#C9974F' },
+        gold: { 300: '#EBCB97', 400: '#DDB273', 500: '#C9974F', 700: '#7A5018' },
         ink: '#3A1C27',
       },
       fontFamily: {
@@ -17,7 +17,7 @@ export default {
       },
       boxShadow: {
         soft: '0 10px 30px -12px rgba(110, 29, 54, 0.25)',
-        glow: '0 0 0 4px rgba(231, 124, 150, 0.25), 0 12px 32px -8px rgba(158, 47, 79, 0.45)',
+        glow: '0 6px 16px -8px rgba(110, 29, 54, 0.45)',
       },
       backgroundImage: {
         'love-gradient': 'linear-gradient(135deg, #FFF1F3 0%, #FFF8F3 45%, #FDE2E7 100%)',

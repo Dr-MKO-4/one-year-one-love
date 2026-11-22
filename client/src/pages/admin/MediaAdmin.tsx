@@ -126,7 +126,7 @@ export function TimelineAdmin() {
                 <p className="text-xs font-bold text-blush-500">{e.date}</p>
                 <p className="truncate text-sm font-semibold text-wine-700">{e.title}</p>
                 {e.toConfirm && (
-                  <span className="chip mt-1 bg-gold-300/40 py-0.5 text-gold-500">
+                  <span className="chip mt-1 bg-gold-300/40 py-0.5 text-gold-700">
                     <AlertCircle className="h-3 w-3" /> À confirmer
                   </span>
                 )}
@@ -141,7 +141,21 @@ export function TimelineAdmin() {
           ))}
         </ul>
       )}
-      <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id ? 'Modifier le moment' : 'Nouveau moment'}>
+      <Modal
+        open={!!draft}
+        onClose={() => setDraft(null)}
+        title={draft?.id ? 'Modifier le moment' : 'Nouveau moment'}
+        footer={
+          <div className="grid grid-cols-2 gap-3">
+            <button className="btn-soft" onClick={() => setDraft(null)}>
+              Annuler
+            </button>
+            <Btn className="btn-primary" onClick={save} disabled={!draft?.date?.trim() || !draft?.title?.trim()}>
+              Enregistrer
+            </Btn>
+          </div>
+        }
+      >
         {draft && (
           <div className="space-y-4">
             <label className="block">
@@ -157,18 +171,18 @@ export function TimelineAdmin() {
               <textarea className="input" rows={3} value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
             </label>
             <label className="block">
-              <span className="label">Ordre d’affichage</span>
+              <span className="label">Position dans la frise</span>
               <input type="number" className="input" value={draft.sortOrder ?? 0} onChange={(e) => setDraft({ ...draft, sortOrder: Number(e.target.value) })} />
             </label>
             {photos.length > 0 && (
               <div>
                 <span className="label">Photo (facultatif)</span>
                 <div className="grid max-h-40 grid-cols-5 gap-2 overflow-y-auto">
-                  <button type="button" onClick={() => setDraft({ ...draft, photoId: null })} className={`aspect-square rounded-xl bg-blush-50 text-xs font-semibold text-wine-600 ${!draft.photoId ? 'ring-4 ring-wine-500' : ''}`}>
+                  <button type="button" onClick={() => setDraft({ ...draft, photoId: null })} className={`aspect-square rounded-xl bg-blush-50 text-xs font-semibold text-wine-600 ${!draft.photoId ? 'ring-[3px] ring-inset ring-wine-600' : ''}`}>
                     Aucune
                   </button>
                   {photos.map((p) => (
-                    <button type="button" key={p.id} onClick={() => setDraft({ ...draft, photoId: p.id })} className={`overflow-hidden rounded-xl ${draft.photoId === p.id ? 'ring-4 ring-wine-500' : ''}`}>
+                    <button type="button" key={p.id} onClick={() => setDraft({ ...draft, photoId: p.id })} className={`overflow-hidden rounded-xl ${draft.photoId === p.id ? 'ring-[3px] ring-inset ring-wine-600' : ''}`}>
                       <img src={photoUrl(p.id)} alt="" className="aspect-square w-full object-cover" />
                     </button>
                   ))}
@@ -178,9 +192,6 @@ export function TimelineAdmin() {
             <label className="flex items-center gap-2 text-sm font-semibold text-wine-700">
               <input type="checkbox" checked={!!draft.toConfirm} onChange={(e) => setDraft({ ...draft, toConfirm: e.target.checked })} className="h-5 w-5 accent-wine-500" /> À confirmer
             </label>
-            <Btn className="btn-primary w-full" onClick={save}>
-              Enregistrer
-            </Btn>
           </div>
         )}
       </Modal>
@@ -193,28 +204,63 @@ export function TimelineAdmin() {
 export function LetterAdmin() {
   const toast = useToast();
   const [letter, setLetter] = useState<Letter | null>(null);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
-    api.letter().then((l) => setLetter(l ?? { title: 'Pour toi', body: '', signature: '' }));
+    api.letter().then((l) => setLetter(l ? { ...l, published: !!l.published } : { title: 'Pour toi', body: '', signature: '', published: false }));
   }, []);
   if (!letter) return <Loader />;
+
+  const save = async (next: Letter) => {
+    setSaving(true);
+    try {
+      const saved = await api.saveLetter(next);
+      setLetter({ ...saved, published: !!saved.published });
+      toast(next.published ? 'Lettre publiée sur l’accueil' : 'Brouillon enregistré', 'love');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="card space-y-4 p-5">
-      <p className="text-sm text-ink/70">Cette lettre s’affiche sur la page d’accueil, cachée dans une enveloppe à ouvrir.</p>
-      <label className="block">
-        <span className="label">Titre</span>
-        <input className="input" value={letter.title} onChange={(e) => setLetter({ ...letter, title: e.target.value })} />
-      </label>
-      <label className="block">
-        <span className="label">Texte</span>
-        <textarea className="input font-display text-lg" rows={12} value={letter.body} onChange={(e) => setLetter({ ...letter, body: e.target.value })} />
-      </label>
-      <label className="block">
-        <span className="label">Signature</span>
-        <input className="input" value={letter.signature} onChange={(e) => setLetter({ ...letter, signature: e.target.value })} />
-      </label>
-      <Btn className="btn-primary w-full" onClick={() => api.saveLetter(letter).then(() => toast('Lettre enregistrée', 'love')).catch((e) => toast(e.message, 'error'))}>
-        Enregistrer la lettre
-      </Btn>
+    <div className="space-y-4">
+      <div className="card flex flex-wrap items-center gap-3 p-4">
+        <span className={`rounded-full px-3 py-1 text-xs font-bold ${letter.published ? 'bg-emerald-100 text-emerald-800' : 'bg-gold-300/40 text-gold-700'}`}>
+          {letter.published ? 'Publiée sur l’accueil' : 'Brouillon : invisible sur l’accueil'}
+        </span>
+        <p className="flex-1 text-sm text-ink/75">
+          {letter.published ? 'Adèle peut ouvrir cette lettre depuis l’accueil.' : 'Rien ne s’affiche sur l’accueil tant que la lettre n’est pas publiée.'}
+        </p>
+      </div>
+      <div className="card space-y-4 p-5">
+        <label className="block">
+          <span className="label">Titre</span>
+          <input className="input" value={letter.title} onChange={(e) => setLetter({ ...letter, title: e.target.value })} />
+        </label>
+        <label className="block">
+          <span className="label">Texte</span>
+          <textarea className="input text-base leading-relaxed" rows={12} value={letter.body} onChange={(e) => setLetter({ ...letter, body: e.target.value })} />
+        </label>
+        <label className="block">
+          <span className="label">Signature</span>
+          <input className="input" value={letter.signature} onChange={(e) => setLetter({ ...letter, signature: e.target.value })} />
+        </label>
+      </div>
+      <section aria-label="Aperçu de la lettre" className="rounded-3xl border border-blush-200 bg-white p-6">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/60">Aperçu</p>
+        <h3 className="text-2xl font-bold">{letter.title || 'Sans titre'}</h3>
+        <p className="mt-4 whitespace-pre-line font-display text-lg leading-relaxed text-ink/85">{letter.body || 'Le texte de la lettre apparaîtra ici.'}</p>
+        {letter.signature && <p className="mt-4 text-right font-script text-3xl text-wine-600">{letter.signature}</p>}
+      </section>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Btn className="btn-white" disabled={saving} onClick={() => save({ ...letter, published: false })}>
+          {letter.published ? 'Repasser en brouillon' : 'Enregistrer le brouillon'}
+        </Btn>
+        <Btn className="btn-primary" disabled={saving || !letter.body.trim()} onClick={() => save({ ...letter, published: true })}>
+          {letter.published ? 'Mettre à jour la lettre publiée' : 'Publier sur l’accueil'}
+        </Btn>
+      </div>
     </div>
   );
 }
