@@ -19,6 +19,7 @@ import { scanLibrary, sync } from './lib/music.js';
 import { sessionsRouter, statsRouter } from './routes/sessions.js';
 import { backupRouter } from './routes/backup.js';
 import { seedIfEmpty } from './seed/seed.js';
+import { applyContentUpdates } from './seed/updates.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.resolve(here, '../../client/dist');
@@ -100,6 +101,7 @@ const io = initRealtime(server);
 async function main() {
   await prisma.$connect();
   await seedIfEmpty();
+  await applyContentUpdates();
   await sync.init(io);
   await scanLibrary();
   server.listen(config.port, () => {

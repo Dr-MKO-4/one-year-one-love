@@ -212,24 +212,20 @@ export const COMPLETE_MY_SENTENCE: Seed<SentenceData>[] = [
 ];
 
 export const TIMELINE = [
-  { date: '22 mars 2025', title: 'La rencontre', description: 'Le jour où tout a commencé.', toConfirm: true },
-  { date: '23 mars 2025', title: 'Les premiers messages', description: 'Au lendemain de notre première sortie, les premiers mots échangés.', toConfirm: true },
-  { date: '16 avril 2025', title: 'L’anniversaire d’Adèle', description: 'Des vœux envoyés à minuit pile.', toConfirm: true },
-  { date: '22 novembre 2025', title: 'Le début de nous', description: 'Le jour où nous sommes devenus un couple.', toConfirm: true },
-  { date: 'Décembre 2025', title: 'L’anniversaire de Miguel', description: 'Premier anniversaire fêté ensemble.', toConfirm: true },
-  { date: '14 février 2026', title: 'Notre première Saint-Valentin', description: 'Une première, et pas la dernière.', toConfirm: true },
-  { date: 'Février 2026', title: 'Le rêve de Zanzibar', description: 'Un projet de voyage qui nous fait encore rêver.', toConfirm: true },
-  { date: '22 mars 2026', title: 'Un an depuis la rencontre', description: '« Il y a un an aujourd’hui, j’ai rencontré la femme avec qui j’ai envie de faire ma vie. »', toConfirm: true },
-  { date: '22 novembre 2026', title: 'One Year, One Love', description: 'Un an ensemble. Et tout le reste à écrire.', toConfirm: true },
+  { date: "22 mars 2025", title: "La rencontre", description: "Ce jour-là, pendant une sortie entre amis, Caliste nous a présentés. On ne se connaissait pas encore vraiment, et on ne pouvait pas imaginer ce que cette simple présentation allait devenir. Qui aurait cru qu'on en arriverait là ? ❤️", toConfirm: false },
+  { date: "23 mars 2025", title: "Les premiers messages", description: "Le lendemain de cette sortie, on a commencé à discuter. Un premier message, quelques échanges, des questions pour apprendre à se connaître… C'était encore le début, mais quelque chose venait de commencer. 😂❤️", toConfirm: false },
+  { date: "16 avril 2025", title: "Ton anniversaire", description: "À minuit, je t'ai souhaité ton anniversaire avec ces mots : « La future femme de ma vie ». Je t'avais aussi dit que tu étais ma meilleure rencontre de l'année. Avec le recul, je trouve ça encore plus beau. 🥹❤️", toConfirm: false },
+  { date: "22 novembre 2025", title: "Le début de notre histoire", description: "Ce jour-là, nous avons officiellement commencé notre relation. Ce n'était plus seulement deux personnes qui apprenaient à se connaître : c'était nous, avec l'envie de construire quelque chose ensemble. Le début de notre histoire en tant que couple. ❤️", toConfirm: false },
+  { date: "4 décembre 2025", title: "Mon anniversaire", description: "Mon premier anniversaire depuis que nous sommes ensemble. Une nouvelle occasion de partager un moment particulier avec toi et de continuer à accumuler ces petits souvenirs qui font notre histoire. ❤️", toConfirm: false },
+  { date: "14 février 2026", title: "Notre première Saint-Valentin", description: "Notre toute première Saint-Valentin ensemble. Je voulais profiter de cette journée pour te montrer encore davantage à quel point je t'aime et rendre ce moment spécial pour nous deux. Une première parmi tant d'autres, je l'espère. ❤️", toConfirm: false },
+  { date: "Février 2026", title: "Notre projet de voyage", description: "Un voyage à deux… 😂 Peu importe où on ira, l'essentiel sera de partir ensemble, de découvrir un nouvel endroit et de se créer des souvenirs à nous. Ce projet reste encore à concrétiser, mais j'espère vraiment qu'on pourra bientôt le réaliser. ❤️", toConfirm: false },
+  { date: "22 mars 2026", title: "Un an depuis notre rencontre", description: "« Il y a un an aujourd'hui, j'ai rencontré la femme avec qui j'ai envie de faire ma vie et je me sens tellement chanceux et heureux de t'avoir dans ma vie. »\n\nUn an déjà depuis cette rencontre pendant une sortie entre amis. Et quand je regarde le chemin parcouru depuis, je mesure encore plus la chance que j'ai de t'avoir rencontrée. ❤️", toConfirm: false },
+  { date: "22 novembre 2026", title: "Notre premier anniversaire", description: "Un an officiellement ensemble. Un an de souvenirs, de rires, de découvertes, de projets et de moments qui nous appartiennent. Ce n'est qu'une première année, et j'espère que ce n'est que le début de beaucoup d'autres. Joyeux premier anniversaire à nous, mon cœur. ❤️", toConfirm: false },
 ];
 
 export const LETTER = {
-  title: 'Pour toi, Adèle',
-  body:
-    'Ce texte est un brouillon : Miguel, remplace-le par ta lettre depuis la configuration (onglet « Accueil & lettre »).\n\n' +
-    'Il y a un an, nous commencions à écrire notre histoire. Ce site rassemble nos souvenirs, nos rires et quelques jeux pour continuer à nous découvrir. ' +
-    'Merci pour chaque jour de cette première année.',
+  title: "Pour toi, Adèle ❤️",
+  body: "Ma vie, Werr… par où commencer ? 😂\n\nQuand je repense au 22 mars 2025, je me dis que c’est quand même incroyable de voir jusqu’où une simple présentation peut nous mener. Ce jour-là, pendant une sortie entre amis, Caliste nous a présentés. On ne savait certainement pas encore ce que cette rencontre allait devenir.\n\nLe lendemain, le 23 mars, on échangeait nos premiers messages. Et petit à petit, on a appris à se connaître, à discuter, à rire, à se taquiner… jusqu’à ce que tu prennes une place de plus en plus importante dans ma vie.\n\nJe me souviens aussi du 16 avril, ton anniversaire. Ce jour-là, je t’avais déjà appelée « la future femme de ma vie » 🥹. Avec le recul, cette phrase me fait sourire, parce qu’aujourd’hui, je suis toujours aussi heureux de t’avoir dans ma vie.\n\nPuis est arrivé le 22 novembre 2025. Ce jour où nous avons officiellement décidé de faire un bout de chemin ensemble. Depuis, on construit notre histoire à notre manière, avec nos moments de bonheur, nos rires, nos petites disputes, nos différences et surtout cette envie de continuer à avancer ensemble.\n\nJe ne vais pas prétendre que tout est toujours parfait. Mais ce que je sais, c’est que j’aime ce que nous construisons. J’aime nos discussions, nos délires, nos projets et même ces petits moments ordinaires qui deviennent précieux simplement parce que je les partage avec toi.\n\nIl y a aussi tous ces projets qu’on imagine à deux… comme cette envie de voyager ensemble. Peu importe la destination, que ce soit Kribi ou ailleurs, j’ai surtout envie qu’on puisse partir, découvrir de nouveaux endroits et créer des souvenirs qui n’appartiendront qu’à nous. Et ce voyage, on finira bien par le concrétiser hein ? 😂❤️\n\nAujourd’hui, le 22 novembre 2026, cela fait un an que nous sommes officiellement ensemble. Un an de nous, de découvertes, d’apprentissage et de souvenirs. Et si je devais revenir au début de cette histoire, je crois que je remercierais simplement le hasard, Caliste et cette fameuse sortie entre amis.\n\nMerci d’être entrée dans ma vie, mon cœur. Merci pour ta présence, pour les moments partagés et pour tout ce que nous avons encore à découvrir ensemble.\n\nJe ne sais pas exactement ce que l’avenir nous réserve, mais je sais que j’ai envie de continuer à l’écrire avec toi.\n\nJe t’aime, Adèle. ❤️",
   signature: 'Miguel',
-  // Brouillon : invisible sur l'accueil tant que Miguel ne l'a pas publié.
-  published: false,
+  published: true,
 };

@@ -52,7 +52,7 @@ export function TimelinePage() {
                 {e.photoId && <img src={photoUrl(e.photoId)} alt="" loading="lazy" className="h-48 w-full object-cover sm:h-56" />}
                 <div className="p-4 sm:p-5">
                   <h2 className="text-xl">{e.title}</h2>
-                  {e.description && <p className="mt-2 text-sm leading-relaxed text-ink/80">{e.description}</p>}
+                  {e.description && <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink/80">{e.description}</p>}
                 </div>
               </article>
             </motion.li>
