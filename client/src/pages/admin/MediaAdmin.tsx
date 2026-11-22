@@ -240,6 +240,52 @@ export function TimelineAdmin() {
 
 /* ------------------------------ Lettre ------------------------------ */
 
+/** Photo d'une signature sur papier -> PNG transparent couleur bordeaux. */
+async function signatureFromPhoto(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('Image illisible.'));
+      i.src = url;
+    });
+    const scale = Math.min(1, 900 / img.naturalWidth);
+    const w = Math.round(img.naturalWidth * scale);
+    const h = Math.round(img.naturalHeight * scale);
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d')!;
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h);
+    // Luminance du papier estimée sur les bords, puis l'encre (plus sombre) devient opaque.
+    let paper = 0;
+    let n = 0;
+    for (let x = 0; x < w; x += 4) for (const y of [2, h - 3]) { const k = (y * w + x) * 4; paper += (d.data[k] + d.data[k + 1] + d.data[k + 2]) / 3; n++; }
+    paper /= n || 1;
+    let minX = w, minY = h, maxX = 0, maxY = 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const k = (y * w + x) * 4;
+        const lum = (d.data[k] + d.data[k + 1] + d.data[k + 2]) / 3;
+        const ink = Math.max(0, Math.min(1, (paper * 0.88 - lum) / (paper * 0.45)));
+        d.data[k] = 0x6e; d.data[k + 1] = 0x1d; d.data[k + 2] = 0x36; d.data[k + 3] = Math.round(ink * 255);
+        if (ink > 0.25) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+      }
+    }
+    if (maxX <= minX) throw new Error('Aucune signature détectée sur la photo.');
+    ctx.putImageData(d, 0, 0);
+    const out = document.createElement('canvas');
+    out.width = maxX - minX + 12;
+    out.height = maxY - minY + 12;
+    out.getContext('2d')!.drawImage(c, minX - 6, minY - 6, out.width, out.height, 0, 0, out.width, out.height);
+    return out.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function LetterAdmin() {
   const toast = useToast();
   const [letter, setLetter] = useState<Letter | null>(null);
@@ -282,15 +328,52 @@ export function LetterAdmin() {
           <textarea className="input text-base leading-relaxed" rows={12} value={letter.body} onChange={(e) => setLetter({ ...letter, body: e.target.value })} />
         </label>
         <label className="block">
-          <span className="label">Signature</span>
+          <span className="label">Signature (texte, utilisé si aucune signature manuscrite)</span>
           <input className="input" value={letter.signature} onChange={(e) => setLetter({ ...letter, signature: e.target.value })} />
         </label>
+        <div>
+          <span className="label">Signature manuscrite</span>
+          <div className="flex flex-wrap items-center gap-3">
+            {letter.signatureImage ? (
+              <img src={letter.signatureImage} alt="Signature manuscrite" className="h-16 w-auto rounded-xl border border-blush-100 bg-white p-1" />
+            ) : (
+              <span className="text-sm text-ink/70">Aucune pour l’instant.</span>
+            )}
+            <label className="btn-white cursor-pointer">
+              Choisir une photo de la signature
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    setLetter({ ...letter, signatureImage: await signatureFromPhoto(f) });
+                  } catch (err) {
+                    toast((err as Error).message, 'error');
+                  }
+                }}
+              />
+            </label>
+            {letter.signatureImage && (
+              <button type="button" className="btn-ghost" onClick={() => setLetter({ ...letter, signatureImage: undefined })}>
+                Retirer
+              </button>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-ink/70">Le papier devient transparent et l’encre prend la couleur du site. Pense à enregistrer ensuite.</p>
+        </div>
       </div>
       <section aria-label="Aperçu de la lettre" className="rounded-3xl border border-blush-200 bg-white p-6">
         <p className="mb-3 text-xs font-bold uppercase tracking-wider text-ink/70">Aperçu</p>
         <h3 className="text-2xl font-bold">{letter.title || 'Sans titre'}</h3>
         <p className="mt-4 whitespace-pre-line font-letter text-lg leading-relaxed text-ink/85">{letter.body || 'Le texte de la lettre apparaîtra ici.'}</p>
-        {letter.signature && <p className="mt-4 text-right font-script text-3xl text-wine-600">{letter.signature}</p>}
+        {letter.signatureImage ? (
+          <img src={letter.signatureImage} alt="" className="ml-auto mt-4 h-20 w-auto" />
+        ) : (
+          letter.signature && <p className="mt-4 text-right font-script text-3xl text-wine-600">{letter.signature}</p>
+        )}
       </section>
       <div className="grid gap-3 sm:grid-cols-2">
         <Btn className="btn-white" disabled={saving} onClick={() => save({ ...letter, published: false })}>
@@ -318,7 +401,7 @@ export function BackupAdmin() {
     try {
       const data = JSON.parse(await file.text());
       const r = await api.importBackup(data);
-      toast(`Import terminé : ${r.imported.sessions} parties, ${r.imported.content} contenus`, 'love');
+      toast(`Import terminé : ${r.imported.sessions} parties, ${r.imported.content} contenus, ${r.imported.settings ?? 0} réglages`, 'love');
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
@@ -332,7 +415,7 @@ export function BackupAdmin() {
       <div className="card p-5">
         <h2 className="text-xl">Télécharger une copie</h2>
         <p className="mt-1 text-sm text-ink/80">
-          Un fichier avec les contenus des jeux, la frise, la lettre et tout l’historique des parties. Les fichiers audio ne sont jamais inclus.
+          Un fichier avec les contenus des jeux, la frise, la lettre, les messages souvenirs et tout l’historique des parties. Les fichiers audio ne sont jamais inclus.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <a href="/api/backup/export?photos=1" className="rounded-2xl border border-blush-200 p-4 hover:bg-blush-50">
@@ -352,7 +435,7 @@ export function BackupAdmin() {
       <div className="card p-5">
         <h2 className="text-xl">Restaurer une copie</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink/80">
-          <li>Choisis un fichier téléchargé depuis cette page.</li>
+          <li>Choisis un fichier de sauvegarde JSON.</li>
           <li>Confirme : les éléments déjà présents avec le même identifiant sont remplacés, les autres sont conservés.</li>
           <li>Un message indique le nombre de parties et de contenus restaurés.</li>
         </ol>

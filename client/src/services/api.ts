@@ -104,6 +104,33 @@ export interface Letter {
   signature: string;
   /** Seule une lettre publiée s'affiche sur l'accueil. */
   published?: boolean;
+  /** Signature manuscrite (image PNG transparente, en data URL). */
+  signatureImage?: string;
+}
+
+export interface ChatMessage {
+  from: 'me' | 'them';
+  text: string;
+  time?: string;
+  day?: string;
+  reply?: { name: string; text: string };
+}
+
+export interface ChatCapture {
+  id: string;
+  title: string;
+  caption?: string;
+  contact: string;
+  status?: string;
+  /** Titre d'un moment de la frise sous lequel afficher la conversation. */
+  attachTo?: string;
+  messages: ChatMessage[];
+}
+
+export interface MessageMemories {
+  published: boolean;
+  excerpts: string[];
+  chats?: ChatCapture[];
 }
 
 export const api = {
@@ -140,6 +167,8 @@ export const api = {
 
   letter: () => get<Letter | null>('/api/settings/letter'),
   saveLetter: (l: Letter) => put<Letter>('/api/settings/letter', l),
+  messages: () => get<MessageMemories | null>('/api/settings/messages'),
+  saveMessages: (messages: MessageMemories) => put<MessageMemories>('/api/settings/messages', messages),
 
   tracks: () => get<Track[]>('/api/tracks'),
   updateTrack: (id: string, b: Partial<Pick<Track, 'title' | 'artist' | 'sortOrder'>>) => put<Track>(`/api/tracks/${id}`, b),

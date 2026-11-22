@@ -5,6 +5,7 @@ import { Page } from '@/components/ui';
 import { ContentAdmin } from './admin/ContentAdmin';
 import { BackupAdmin, LetterAdmin, PhotosAdmin, TimelineAdmin } from './admin/MediaAdmin';
 import { MusicAdmin } from './admin/MusicAdmin';
+import { MessagesAdmin } from './admin/MessagesAdmin';
 
 const TABS = [
   { id: 'jeux', label: 'Jeux', icon: Gamepad2, title: 'Contenus des jeux', intro: 'Questions, dilemmes, paires, défis et phrases de chaque jeu.' },
@@ -59,7 +60,12 @@ export default function AdminPage() {
         {tabId === 'jeux' && <ContentAdmin />}
         {tabId === 'photos' && <PhotosAdmin />}
         {tabId === 'frise' && <TimelineAdmin />}
-        {tabId === 'lettre' && <LetterAdmin />}
+        {tabId === 'lettre' && (
+          <>
+            <LetterAdmin />
+            <MessagesAdmin />
+          </>
+        )}
         {tabId === 'musique' && <MusicAdmin />}
         {tabId === 'sauvegarde' && <BackupAdmin />}
       </div>

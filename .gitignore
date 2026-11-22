@@ -8,3 +8,6 @@ coverage/
 
 # Fichiers audio : déposés sur le volume Railway (ou en local dans music/), jamais dans git
 music/
+
+# Fichiers personnels (signature…) : jamais dans git
+private/

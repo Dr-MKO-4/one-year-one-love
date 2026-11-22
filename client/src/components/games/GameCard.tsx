@@ -5,15 +5,20 @@ import { GAMES, MODE_LABELS, type GameId } from '@shared/types';
 import { GAME_VISUALS } from '@/games/registry';
 import { rise } from '../ui';
 
-export function GameCard({ gameId, best }: { gameId: GameId; index?: number; best?: number | null }) {
+export function GameCard({ gameId, best, index = 0 }: { gameId: GameId; index?: number; best?: number | null }) {
   const g = GAMES[gameId];
   const v = GAME_VISUALS[gameId];
   const Icon = v.icon;
   return (
-    <motion.div variants={rise}>
-      <Link to={`/jeux/${gameId}`} className="group card flex h-full flex-col p-5 transition-shadow hover:shadow-soft">
+    <motion.div variants={rise} whileHover={{ y: -6, rotate: index % 2 ? 0.8 : -0.8 }} whileTap={{ scale: 0.97 }}>
+      <Link to={`/jeux/${gameId}`} className="group card relative flex h-full flex-col overflow-hidden p-5">
+        <motion.div
+          className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${v.gradient} opacity-15`}
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ repeat: Infinity, duration: 5 + index }}
+        />
         <div className="flex items-center gap-3">
-          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${v.gradient} text-white`}>
+          <span className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${v.gradient} text-white shadow-soft transition-transform group-hover:rotate-6`}>
             <Icon className="h-5 w-5" />
           </span>
           <h2 className="text-xl">{g.title}</h2>

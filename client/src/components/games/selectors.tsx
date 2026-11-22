@@ -32,7 +32,7 @@ function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             className={`relative rounded-2xl border px-3 py-3 text-left transition-colors ${active ? 'border-wine-600 text-white' : 'border-blush-200 bg-white text-wine-800 hover:bg-blush-50'}`}
           >
-            {active && <motion.span layoutId={layoutId} className="absolute inset-0 -z-0 rounded-2xl bg-wine-600" transition={{ duration: 0.18 }} />}
+            {active && <motion.span layoutId={layoutId} className="absolute inset-0 -z-0 rounded-2xl bg-wine-gradient shadow-glow" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
             {active && <Check className="absolute right-2 top-2 h-4 w-4 text-white" aria-hidden />}
             <span className="relative block pr-4 text-sm font-bold">{o.label}</span>
             {o.hint && <span className={`relative mt-0.5 block text-xs leading-tight ${active ? 'text-white/90' : 'text-ink/70'}`}>{o.hint}</span>}

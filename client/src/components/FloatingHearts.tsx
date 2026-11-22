@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Heart, Sparkles } from 'lucide-react';
 
 /** Fond animé : cœurs et étincelles qui s'élèvent doucement. */
-export function FloatingHearts({ count = 7 }: { count?: number }) {
+export function FloatingHearts({ count = 14 }: { count?: number }) {
   const reduce = useReducedMotion();
   const items = useMemo(
     () =>
@@ -11,11 +11,11 @@ export function FloatingHearts({ count = 7 }: { count?: number }) {
         id: i,
         left: Math.random() * 100,
         size: 10 + Math.random() * 22,
-        duration: 22 + Math.random() * 18,
+        duration: 14 + Math.random() * 16,
         delay: -Math.random() * 30,
         drift: (Math.random() - 0.5) * 80,
-        sparkle: false,
-        opacity: 0.1 + Math.random() * 0.15,
+        sparkle: i % 4 === 0,
+        opacity: 0.15 + Math.random() * 0.3,
       })),
     [count],
   );

@@ -89,6 +89,7 @@ backupRouter.post(
       imported: {
         content: b.content.length,
         timeline: b.timeline.length,
+        settings: b.settings.length,
         sessions: b.sessions.length,
         tracks: b.tracks.length,
         photos: b.photos.length,

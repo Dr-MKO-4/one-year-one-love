@@ -67,8 +67,8 @@ export function GamesHome() {
       )}
 
       <motion.section variants={stagger} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {GAME_IDS.map((id) => (
-          <GameCard key={id} gameId={id} best={dash?.perGame.find((g) => g.gameId === id)?.best} />
+        {GAME_IDS.map((id, i) => (
+          <GameCard key={id} gameId={id} index={i} best={dash?.perGame.find((g) => g.gameId === id)?.best} />
         ))}
       </motion.section>
 

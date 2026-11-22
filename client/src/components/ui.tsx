@@ -13,10 +13,10 @@ import confetti from 'canvas-confetti';
 export function Page({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
+      initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -16, filter: 'blur(6px)' }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className={`mx-auto w-full max-w-3xl px-4 pb-44 pt-6 sm:px-6 md:pb-16 ${className}`}
     >
       {children}
@@ -26,11 +26,11 @@ export function Page({ children, className = '' }: { children: ReactNode; classN
 
 export const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
 };
 export const rise = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 260, damping: 24 } },
 };
 
 /** Bouton avec micro-interactions (rebond au toucher). */
@@ -234,11 +234,11 @@ export function Loader({ label = 'Un instant…' }: { label?: string }) {
 
 export function SectionTitle({ kicker, title, children }: { kicker?: string; title: string; children?: ReactNode }) {
   return (
-    <div className="mb-6">
-      {kicker && <p className="text-xs font-bold uppercase tracking-[0.18em] text-wine-600">{kicker}</p>}
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+      {kicker && <p className="font-script text-2xl text-wine-600">{kicker}</p>}
       <h1 className="mt-1 text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>
       {children && <div className="mt-2 text-ink/80">{children}</div>}
-    </div>
+    </motion.div>
   );
 }
 

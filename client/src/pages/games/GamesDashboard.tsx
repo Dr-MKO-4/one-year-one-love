@@ -6,7 +6,7 @@ import { GAMES, PLAYER_NAMES } from '@shared/types';
 import { api, type Dashboard } from '@/services/api';
 import { getSocket } from '@/services/socket';
 import { GAME_VISUALS } from '@/games/registry';
-import { AnimatedNumber, Empty, Loader, Page, ScoreRing, SectionTitle } from '@/components/ui';
+import { AnimatedNumber, Empty, Loader, Page, ScoreRing, SectionTitle, rise, stagger } from '@/components/ui';
 import { Avatar } from '@/components/games/common';
 
 /** Courbe de progression du score commun (une seule série : le titre la nomme, pas de légende). */
@@ -89,8 +89,8 @@ export function GamesDashboard() {
         Moyennes des parties terminées, sur 100. Les parties interrompues ne comptent pas.
       </SectionTitle>
 
-      <section className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-        <div className="card flex flex-wrap items-center justify-around gap-6 p-6">
+      <motion.section variants={stagger} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
+        <motion.div variants={rise} className="card flex flex-wrap items-center justify-around gap-6 p-6">
           <div className="flex flex-col items-center gap-1">
             <ScoreRing value={dash.couple} size={140} label="Score commun" />
             <p className="max-w-[12rem] text-center text-xs text-ink/70">Moyenne de vos parties à deux</p>
@@ -105,8 +105,8 @@ export function GamesDashboard() {
               </div>
             ))}
           </div>
-        </div>
-        <div className="grid gap-4">
+        </motion.div>
+        <motion.div variants={rise} className="grid gap-4">
           <div className="card flex items-center gap-4 p-5">
             <ScoreRing value={dash.compatibility} size={88} stroke={8} tone="gold" />
             <div>
@@ -125,8 +125,8 @@ export function GamesDashboard() {
               </div>
             ))}
           </dl>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {dash.best && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl border border-blush-100 bg-white p-5">
@@ -140,11 +140,11 @@ export function GamesDashboard() {
 
       <h2 className="mb-1 mt-8 text-xl">Progression par jeu</h2>
       <p className="mb-4 text-sm text-ink/70">La courbe du score commun apparaît à partir de 2 parties terminées d’un même jeu.</p>
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.section variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {played.map((g) => {
           const V = GAME_VISUALS[g.gameId];
           return (
-            <div key={g.gameId} className="card p-5">
+            <motion.div key={g.gameId} variants={rise} whileHover={{ y: -4 }} className="card p-5">
               <div className="mb-3 flex items-center gap-3">
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${V.gradient} text-white`}>
                   <V.icon className="h-5 w-5" />
@@ -171,10 +171,10 @@ export function GamesDashboard() {
                 ))}
               </dl>
               {g.progression.filter((x) => x.couple !== null).length >= 2 && <Sparkline points={g.progression} />}
-            </div>
+            </motion.div>
           );
         })}
-      </section>
+      </motion.section>
       {played.length < 6 && (
         <p className="mt-4 text-sm text-ink/70">
           Pas encore joué : {dash.perGame.filter((g) => g.played === 0).map((g) => GAMES[g.gameId].title).join(', ')}.

@@ -71,11 +71,11 @@ export function Layout({ children, me }: { children: ReactNode; me: Player }) {
 
   return (
     <div className="relative min-h-[100dvh]">
-      {!calm && <FloatingHearts />}
+      <FloatingHearts count={calm ? 8 : 14} />
       <header className="sticky top-0 z-30 border-b border-blush-100 bg-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-2">
-            <Heart className="h-5 w-5 shrink-0 fill-wine-500 text-wine-500" />
+            <Heart className="h-5 w-5 shrink-0 animate-heartbeat fill-blush-400 text-blush-400" />
             <span className="truncate font-display text-base font-bold text-wine-800 sm:text-lg">
               <span className="min-[360px]:hidden">One Love</span>
               <span className="hidden min-[360px]:inline">One Year, One Love</span>
@@ -91,7 +91,7 @@ export function Layout({ children, me }: { children: ReactNode; me: Player }) {
                   aria-current={isActive ? 'page' : undefined}
                   className={`relative rounded-full px-4 py-2 text-sm font-semibold ${isActive ? 'text-white' : 'text-wine-800 hover:bg-blush-50'}`}
                 >
-                  {isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-wine-600" transition={{ duration: 0.2 }} />}
+                  {isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-wine-gradient" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
                   {n.label}
                 </Link>
               );
@@ -135,8 +135,10 @@ export function Layout({ children, me }: { children: ReactNode; me: Player }) {
             const isActive = n.id === active;
             return (
               <Link key={n.id} to={n.to} aria-current={isActive ? 'page' : undefined} className="relative flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold">
-                {isActive && <span className="absolute top-0 h-0.5 w-8 rounded-b-full bg-wine-600" />}
-                <n.icon className={`h-6 w-6 ${isActive ? 'text-wine-700' : 'text-ink/55'}`} />
+                {isActive && <motion.span layoutId="tab-dot" className="absolute top-0 h-1 w-8 rounded-b-full bg-wine-gradient" transition={{ type: 'spring', stiffness: 500, damping: 35 }} />}
+                <motion.span animate={{ scale: isActive ? 1.15 : 1, y: isActive ? -1 : 0 }}>
+                  <n.icon className={`h-6 w-6 ${isActive ? 'text-wine-700' : 'text-ink/55'}`} />
+                </motion.span>
                 <span className={isActive ? 'text-wine-800' : 'text-ink/65'}>{n.label}</span>
               </Link>
             );

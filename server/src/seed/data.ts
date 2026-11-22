@@ -96,9 +96,9 @@ export const MEMORY_OF_US: Seed<MemoryData>[] = [
   pair({ kind: 'date', value: '22 mars 2025' }, { kind: 'memory', value: 'Notre rencontre' }),
   pair({ kind: 'date', value: '22 novembre 2025' }, { kind: 'memory', value: 'Le début de notre couple' }),
   pair({ kind: 'date', value: '16 avril' }, { kind: 'memory', value: 'L’anniversaire d’Adèle' }),
-  pair({ kind: 'date', value: 'Début décembre' }, { kind: 'memory', value: 'L’anniversaire de Miguel' }),
+  pair({ kind: 'date', value: '4 décembre' }, { kind: 'memory', value: 'L’anniversaire de Miguel' }),
   pair({ kind: 'date', value: '14 février 2026' }, { kind: 'memory', value: 'Notre première Saint-Valentin' }),
-  pair({ kind: 'place', value: 'Zanzibar' }, { kind: 'memory', value: 'Le voyage dont on rêve' }, 'medium'),
+  pair({ kind: 'place', value: 'Kribi' }, { kind: 'memory', value: 'Le week-end dont on rêve' }, 'medium'),
   pair({ kind: 'text', value: 'Ursule' }, { kind: 'memory', value: 'Le surnom favori de Miguel' }, 'medium'),
   pair({ kind: 'place', value: 'Douala' }, { kind: 'memory', value: 'La ville de notre histoire' }),
   pair({ kind: 'date', value: 'Octobre 2026' }, { kind: 'place', value: 'Le Ngondo' }, 'hard'),
@@ -124,7 +124,8 @@ export const DO_YOU_REMEMBER: Seed<RememberData>[] = [
   mcq('easy', 'Quel jour est l’anniversaire d’Adèle ?', ['16 avril', '4 décembre', '22 mars', '14 février'], '16 avril'),
   mcq('easy', 'Dans quelle ville s’écrit l’essentiel de notre histoire ?', ['Douala', 'Yaoundé', 'Kribi', 'Limbé'], 'Douala'),
   free('medium', 'Quand tombe l’anniversaire de Miguel ?', { answer: '4 décembre', keywords: ['4 décembre', 'décembre'], allowPartial: true }, true),
-  mcq('medium', 'Quelle destination de voyage avons-nous évoquée en février 2026 ?', ['Zanzibar', 'Kribi', 'Paris', 'Dakar'], 'Zanzibar'),
+  mcq('medium', 'Où rêvons-nous de partir en week-end à deux ?', ['Kribi', 'Limbé', 'Zanzibar', 'Dakar'], 'Kribi', false),
+  free('easy', 'Qui nous a présentés ?', { answer: 'Caliste', keywords: ['Caliste'] }),
   free('medium', 'Quel surnom Miguel donne-t-il le plus souvent à Adèle ?', { answer: 'Ursule', keywords: ['Ursule'] }, true),
   free('medium', 'Où avons-nous eu notre première longue conversation ?'),
   free('medium', 'Quel était le premier surnom que nous utilisions ?'),
@@ -182,7 +183,7 @@ const s = (difficulty: Difficulty, prompt: string, keywordGroups: string[][] = [
 
 const PLACES = ['plage', 'mer', 'océan', 'île', 'sable'];
 const HOME = ['maison', 'chez nous', 'canapé', 'lit', 'cocon'];
-const TRAVEL = ['voyage', 'partir', 'avion', 'vacances', 'découvrir', 'Zanzibar'];
+const TRAVEL = ['voyage', 'partir', 'avion', 'vacances', 'découvrir', 'Kribi', 'week-end'];
 const FAMILY = ['famille', 'enfants', 'bébé', 'mariage', 'marier'];
 const LAUGH = ['rire', 'rigoler', 'blague', 'drôle', 'fou rire'];
 const FOOD = ['manger', 'restaurant', 'dîner', 'cuisine', 'repas', 'plat'];
@@ -224,7 +225,7 @@ export const TIMELINE = [
 ];
 
 export const LETTER = {
-  title: "Pour toi, Adèle ❤️",
+  title: "Pour toi, Adèle",
   body: "Ma vie, Werr… par où commencer ? 😂\n\nQuand je repense au 22 mars 2025, je me dis que c’est quand même incroyable de voir jusqu’où une simple présentation peut nous mener. Ce jour-là, pendant une sortie entre amis, Caliste nous a présentés. On ne savait certainement pas encore ce que cette rencontre allait devenir.\n\nLe lendemain, le 23 mars, on échangeait nos premiers messages. Et petit à petit, on a appris à se connaître, à discuter, à rire, à se taquiner… jusqu’à ce que tu prennes une place de plus en plus importante dans ma vie.\n\nJe me souviens aussi du 16 avril, ton anniversaire. Ce jour-là, je t’avais déjà appelée « la future femme de ma vie » 🥹. Avec le recul, cette phrase me fait sourire, parce qu’aujourd’hui, je suis toujours aussi heureux de t’avoir dans ma vie.\n\nPuis est arrivé le 22 novembre 2025. Ce jour où nous avons officiellement décidé de faire un bout de chemin ensemble. Depuis, on construit notre histoire à notre manière, avec nos moments de bonheur, nos rires, nos petites disputes, nos différences et surtout cette envie de continuer à avancer ensemble.\n\nJe ne vais pas prétendre que tout est toujours parfait. Mais ce que je sais, c’est que j’aime ce que nous construisons. J’aime nos discussions, nos délires, nos projets et même ces petits moments ordinaires qui deviennent précieux simplement parce que je les partage avec toi.\n\nIl y a aussi tous ces projets qu’on imagine à deux… comme cette envie de voyager ensemble. Peu importe la destination, que ce soit Kribi ou ailleurs, j’ai surtout envie qu’on puisse partir, découvrir de nouveaux endroits et créer des souvenirs qui n’appartiendront qu’à nous. Et ce voyage, on finira bien par le concrétiser hein ? 😂❤️\n\nAujourd’hui, le 22 novembre 2026, cela fait un an que nous sommes officiellement ensemble. Un an de nous, de découvertes, d’apprentissage et de souvenirs. Et si je devais revenir au début de cette histoire, je crois que je remercierais simplement le hasard, Caliste et cette fameuse sortie entre amis.\n\nMerci d’être entrée dans ma vie, mon cœur. Merci pour ta présence, pour les moments partagés et pour tout ce que nous avons encore à découvrir ensemble.\n\nJe ne sais pas exactement ce que l’avenir nous réserve, mais je sais que j’ai envie de continuer à l’écrire avec toi.\n\nJe t’aime, Adèle. ❤️",
   signature: 'Miguel',
   published: true,

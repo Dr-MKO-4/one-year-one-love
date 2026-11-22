@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Play, Settings2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Heart, Play, Settings2 } from 'lucide-react';
 import { GAMES, GAME_IDS, MODE_LABELS, PLAYERS, PLAYER_NAMES, otherPlayer, type Difficulty, type GameId, type PlayMode } from '@shared/types';
 import { useMe } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
@@ -111,18 +112,30 @@ export function GameIntro() {
 
       {/* Mobile : présentation, réglages, exemple, règles. Ordinateur : réglages dans une colonne qui reste visible. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className={`rounded-3xl bg-gradient-to-br ${v.gradient} p-6 text-white`}>
-          <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+        <motion.section initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${v.gradient} p-6 text-white shadow-glow`}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <motion.span
+              key={i}
+              aria-hidden
+              className="absolute"
+              style={{ left: `${10 + i * 16}%`, top: `${20 + (i % 3) * 25}%` }}
+              animate={{ y: [0, -12, 0], opacity: [0.15, 0.35, 0.15] }}
+              transition={{ repeat: Infinity, duration: 3 + i * 0.4, delay: i * 0.2 }}
+            >
+              <Heart className="h-6 w-6 fill-white/30 text-white/30" />
+            </motion.span>
+          ))}
+          <div className="relative flex items-center gap-3">
+            <motion.span initial={{ rotate: -30, scale: 0 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
               <Icon className="h-6 w-6" />
-            </span>
+            </motion.span>
             <h1 className="font-display text-3xl text-white sm:text-4xl">{game.title}</h1>
           </div>
-          <p className="mt-3 text-white/95">{game.objective}</p>
-          <p className="mt-2 text-sm font-semibold text-white/90">
+          <p className="relative mt-3 text-white/95">{game.objective}</p>
+          <p className="relative mt-2 text-sm font-semibold text-white/90">
             {game.needsBoth ? `À deux · ${game.modes.map((m) => MODE_LABELS[m]).join(' ou ')}` : 'À deux ou en solo'} · {game.format}
           </p>
-        </section>
+        </motion.section>
 
         <div className="lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-start">{settings}</div>
 

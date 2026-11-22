@@ -8,6 +8,7 @@ import { Loader } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TimelinePage } from './pages/TimelinePage';
+import { MessagesPage } from './pages/MessagesPage';
 import { GamesHome } from './pages/games/GamesHome';
 import { GameIntro } from './pages/games/GameIntro';
 import { GamePlay } from './pages/games/GamePlay';
@@ -32,6 +33,7 @@ export function App() {
             <Routes location={location} key={location.pathname.split('/').slice(0, 3).join('/')}>
               <Route path="/" element={<HomePage />} />
               <Route path="/frise" element={<TimelinePage />} />
+              <Route path="/messages" element={<MessagesPage />} />
               <Route path="/jeux" element={<GamesHome />} />
               <Route path="/jeux/tableau-de-bord" element={<GamesDashboard />} />
               <Route path="/jeux/historique" element={<GameHistory />} />

@@ -5,6 +5,8 @@ import { PLAYER_NAMES, type Player } from '@shared/types';
 import { useAuth } from '@/lib/auth';
 import { FloatingHearts } from '@/components/FloatingHearts';
 
+const TITLE = 'One Year, One Love';
+
 export function LoginPage() {
   const { login } = useAuth();
   const [who, setWho] = useState<Player | null>(null);
@@ -42,32 +44,57 @@ export function LoginPage() {
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4 py-10">
-      <FloatingHearts count={8} />
-      <Heart className="h-12 w-12 fill-wine-500 text-wine-500" aria-hidden />
-      <h1 className="mt-4 text-center font-display text-4xl text-wine-800 sm:text-5xl">One Year, One Love</h1>
-      <p className="mt-3 font-script text-2xl text-wine-600">22 novembre 2025 · 22 novembre 2026</p>
+      <FloatingHearts count={22} />
+      <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 12 }}>
+        <Heart className="h-16 w-16 animate-heartbeat fill-blush-400 text-blush-400 drop-shadow-lg" aria-hidden />
+      </motion.div>
+      <h1 className="mt-4 text-center font-display text-4xl sm:text-5xl" aria-label={TITLE}>
+        {TITLE.split('').map((c, i) => (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="inline-block text-gradient animate-shimmer"
+            initial={{ opacity: 0, y: 30, rotateX: -90 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            transition={{ delay: 0.2 + i * 0.035, type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            {c === ' ' ? ' ' : c}
+          </motion.span>
+        ))}
+      </h1>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-3 font-script text-2xl text-wine-600">
+        22 novembre 2025 · 22 novembre 2026
+      </motion.p>
 
       <div className="mt-10 w-full max-w-sm">
         <AnimatePresence mode="wait">
           {!who ? (
-            <motion.div key="who" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <motion.div key="who" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ delay: 0.4 }}>
               <h2 className="mb-4 text-center font-sans text-base font-semibold text-wine-800">Qui es-tu ?</h2>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {(['adele', 'miguel'] as Player[]).map((p) => (
-                  <button key={p} onClick={() => { setWho(p); setTimeout(() => inputRef.current?.focus(), 50); }} className="card flex flex-col items-center gap-3 p-5 transition-shadow hover:shadow-soft sm:p-6">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-wine-600 font-display text-2xl text-white sm:h-16 sm:w-16">{PLAYER_NAMES[p][0]}</span>
+                {(['adele', 'miguel'] as Player[]).map((p, i) => (
+                  <motion.button
+                    key={p}
+                    initial={{ opacity: 0, y: 30, rotate: i ? 4 : -4 }}
+                    animate={{ opacity: 1, y: 0, rotate: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1, type: 'spring' }}
+                    whileHover={{ y: -6, rotate: i ? 2 : -2 }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => { setWho(p); setTimeout(() => inputRef.current?.focus(), 50); }}
+                    className="card flex flex-col items-center gap-3 p-5 sm:p-6"
+                  >
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-wine-gradient font-display text-2xl text-white shadow-glow sm:h-16 sm:w-16">{PLAYER_NAMES[p][0]}</span>
                     <span className="font-display text-xl text-wine-800">{PLAYER_NAMES[p]}</span>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </motion.div>
           ) : (
             <motion.form
               key="pin"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
               className="card p-5 sm:p-6"
               onSubmit={(e) => {
                 e.preventDefault();

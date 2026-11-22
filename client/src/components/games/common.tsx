@@ -78,15 +78,17 @@ export function HandOff({ to, children, id }: { to: Player; children: ReactNode;
   return (
     <AnimatePresence mode="wait">
       {!ready ? (
-        <motion.div key="hand" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card flex flex-col items-center gap-4 p-8 text-center">
-          <Hand className="h-9 w-9 text-wine-600" aria-hidden />
+        <motion.div key="hand" initial={{ opacity: 0, rotateY: -90 }} animate={{ opacity: 1, rotateY: 0 }} exit={{ opacity: 0, rotateY: 90 }} className="card flex flex-col items-center gap-4 p-8 text-center">
+          <motion.div animate={{ rotate: [0, -12, 12, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}>
+            <Hand className="h-10 w-10 text-wine-600" aria-hidden />
+          </motion.div>
           <h2 className="text-2xl">Passe le téléphone à {PLAYER_NAMES[to]}</h2>
           <Btn onClick={() => setReady(true)}>
             <Eye className="h-5 w-5" /> Je suis {PLAYER_NAMES[to]}, afficher
           </Btn>
         </motion.div>
       ) : (
-        <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div key="content" initial={{ opacity: 0, rotateY: -90 }} animate={{ opacity: 1, rotateY: 0 }} exit={{ opacity: 0 }}>
           {children}
         </motion.div>
       )}

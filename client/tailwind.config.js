@@ -12,14 +12,14 @@ export default {
       },
       fontFamily: {
         // Titres : serif chaleureux ; texte : sans sobre ; lettre : serif de lecture ; signature : écriture manuscrite.
-        display: ['"Young Serif"', 'Georgia', 'serif'],
-        letter: ['"Literata Variable"', 'Georgia', 'serif'],
+        display: ['"Young Serif"', 'Georgia', 'serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Noto Color Emoji"'],
+        letter: ['"Literata Variable"', 'Georgia', 'serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Noto Color Emoji"'],
         script: ['"La Belle Aurore"', 'cursive'],
-        sans: ['"Instrument Sans Variable"', 'system-ui', 'sans-serif'],
+        sans: ['"Instrument Sans Variable"', 'system-ui', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Noto Color Emoji"'],
       },
       boxShadow: {
         soft: '0 10px 30px -12px rgba(110, 29, 54, 0.25)',
-        glow: '0 6px 16px -8px rgba(110, 29, 54, 0.45)',
+        glow: '0 0 0 4px rgba(231, 124, 150, 0.22), 0 12px 32px -8px rgba(158, 47, 79, 0.45)',
       },
       backgroundImage: {
         'love-gradient': 'linear-gradient(135deg, #FFF1F3 0%, #FFF8F3 45%, #FDE2E7 100%)',
