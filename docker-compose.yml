@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: love-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: love
+      POSTGRES_PASSWORD: love
+      POSTGRES_DB: love
+    ports:
+      - "5433:5432"
+    volumes:
+      - love-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U love -d love"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Optionnel : tester l'image de production en local
+  #   docker compose --profile app up --build
+  app:
+    profiles: ["app"]
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://love:love@db:5432/love?schema=public
+      MIGUEL_PIN: "2203"
+      ADELE_PIN: "1604"
+      JWT_SECRET: local-docker-secret-change-me
+      NODE_ENV: production
+      PORT: 8080
+      MUSIC_DIR: /music
+    volumes:
+      - ./music:/music
+    ports:
+      - "8080:8080"
+
+volumes:
+  love-db-data:

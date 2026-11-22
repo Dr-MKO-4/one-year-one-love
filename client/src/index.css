@@ -1,0 +1,88 @@
+@import '@fontsource-variable/nunito';
+@import '@fontsource/playfair-display/500.css';
+@import '@fontsource/playfair-display/700.css';
+@import '@fontsource/playfair-display/700-italic.css';
+@import '@fontsource/great-vibes/400.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+    background-image: radial-gradient(circle at 10% 0%, #fde2e7 0%, transparent 45%),
+      radial-gradient(circle at 100% 30%, #fff1f3 0%, transparent 40%),
+      radial-gradient(circle at 30% 100%, #f9c5d0 0%, transparent 45%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+  h1, h2, h3 {
+    @apply font-display text-wine-700;
+  }
+  ::selection {
+    @apply bg-blush-200 text-wine-800;
+  }
+  :focus-visible {
+    @apply outline-none ring-4 ring-blush-300/70;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-white/70 bg-white/75 shadow-soft backdrop-blur-md;
+  }
+  .btn {
+    @apply inline-flex min-h-[48px] select-none items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-wine-gradient text-white shadow-glow;
+  }
+  .btn-soft {
+    @apply btn bg-blush-100 text-wine-700 hover:bg-blush-200;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-wine-600 hover:bg-blush-50;
+  }
+  .btn-white {
+    @apply btn border border-blush-200 bg-white text-wine-700 hover:bg-blush-50;
+  }
+  .input {
+    @apply w-full rounded-2xl border border-blush-200 bg-white/90 px-4 py-3 text-base text-ink placeholder:text-ink/40 focus:border-blush-400 focus:outline-none focus:ring-4 focus:ring-blush-200/60;
+  }
+  .label {
+    @apply mb-1 block text-sm font-semibold text-wine-700;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-blush-100 px-3 py-1 text-xs font-semibold text-wine-700;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-wine-500 via-blush-500 to-gold-500 bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+}
+
+.perspective {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,96 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Contenu configurable des six jeux (questions, défis, associations...).
+/// `data` suit le schéma propre à chaque jeu (voir shared/types.ts).
+model ContentItem {
+  id         String   @id @default(cuid())
+  gameId     String
+  difficulty String   @default("easy")
+  data       Json
+  active     Boolean  @default(true)
+  /// Fait repris de la discussion, à confirmer par Miguel.
+  toConfirm  Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([gameId, active])
+}
+
+/// Photos personnelles, redimensionnées côté client avant envoi.
+model Photo {
+  id        String   @id @default(cuid())
+  mime      String
+  data      Bytes
+  width     Int
+  height    Int
+  caption   String?
+  createdAt DateTime @default(now())
+}
+
+/// Repères de la frise "One Year, One Love".
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  date        String
+  title       String
+  description String?
+  photoId     String?
+  toConfirm   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Partie de jeu : état partagé en temps réel et scores normalisés sur 100.
+model GameSession {
+  id            String    @id @default(cuid())
+  gameId        String
+  mode          String
+  difficulty    String
+  players       String[]
+  sharedDevice  Boolean   @default(false)
+  state         Json
+  status        String    @default("in_progress")
+  scoreMiguel   Float?
+  scoreAdele    Float?
+  coupleScore   Float?
+  compatibility Float?
+  version       Int       @default(0)
+  createdBy     String
+  startedAt     DateTime  @default(now())
+  endedAt       DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([gameId])
+}
+
+/// Réglages libres (ex. lettre d'anniversaire affichée sur l'accueil).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Playlist partagée : un titre par fichier audio du dossier MUSIC_DIR (volume Railway en production).
+/// Synchronisée automatiquement avec le dossier ; titre, artiste et ordre restent modifiables.
+model Track {
+  id          String   @id @default(cuid())
+  fileName    String   @unique
+  title       String
+  artist      String
+  sortOrder   Int      @default(0)
+  durationSec Float?
+  sizeBytes   Int?
+  mime        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

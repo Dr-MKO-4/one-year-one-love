@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+server/backups/
+coverage/
+
+# Fichiers audio : déposés sur le volume Railway (ou en local dans music/), jamais dans git
+music/
