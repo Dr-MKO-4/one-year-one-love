@@ -5,6 +5,7 @@ import { api, type Track } from '@/services/api';
 import { useToast } from '@/lib/toast';
 import { Btn, Loader } from '@/components/ui';
 
+const SUPPORTED = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac)$/i;
 const fmt = (s: number | null) => (s ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : '–');
 
 export function MusicAdmin() {
@@ -22,7 +23,15 @@ export function MusicAdmin() {
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const list = Array.from(files);
+    const all = Array.from(files);
+    // Ne garde que les formats lus par le lecteur, et ignore les fichiers vides (ex. .vm.au).
+    const list = all.filter((f) => f.size > 0 && SUPPORTED.test(f.name));
+    const skipped = all.length - list.length;
+    if (skipped) toast(`${skipped} fichier(s) ignoré(s) : format non pris en charge ou fichier vide`, 'info');
+    if (!list.length) {
+      if (input.current) input.current.value = '';
+      return;
+    }
     setUploading(list.map((f) => f.name));
     for (const f of list) {
       try {
@@ -58,7 +67,7 @@ export function MusicAdmin() {
 
   return (
     <div>
-      <input ref={input} type="file" accept="audio/*,.mp3,.m4a,.aac,.ogg,.opus,.wav,.flac" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
+      <input ref={input} type="file" accept=".mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
       <div className="card mb-4 p-4 text-sm text-ink/70">
         <p>
           La musique est <strong>partagée</strong> : quand l’un de vous lance, met en pause, avance ou zappe, le téléphone de l’autre suit en même temps. Si personne n’est connecté, elle se met en pause toute seule.
