@@ -24,8 +24,8 @@ export function MessageMemoriesCard() {
 
   return (
     <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ type: 'spring', stiffness: 120, damping: 18 }} className="mt-6">
-      <Link to="/messages" className="group relative block overflow-hidden rounded-3xl bg-[#1d1526] p-6 text-white shadow-soft">
-        <motion.div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-[#8a4be6] to-[#4b6ef0] opacity-40 blur-2xl" animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 6 }} />
+      <Link to="/messages" className="group relative block overflow-hidden rounded-3xl bg-wine-900 p-6 text-white shadow-soft">
+        <motion.div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blush-400 opacity-30 blur-2xl" animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 6 }} />
         <div className="relative flex items-center gap-2 text-sm font-semibold text-white/80">
           <MessageCircleHeart className="h-5 w-5" /> Nos messages
         </div>
@@ -38,7 +38,7 @@ export function MessageMemoriesCard() {
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
                 transition={{ duration: 0.5 }}
-                className="ml-auto max-w-[90%] rounded-2xl rounded-br-md bg-gradient-to-br from-[#8a4be6] to-[#4b6ef0] px-4 py-3 text-[15px] leading-snug"
+                className="ml-auto max-w-[90%] rounded-3xl rounded-br-lg bg-white px-4 py-3 text-ink text-[15px] leading-snug"
               >
                 {excerpts[i]}
               </motion.p>

@@ -37,7 +37,7 @@ export function MessagesPage() {
           Les conversations s’ajoutent dans Configuration, onglet Lettre.
         </Empty>
       ) : (
-        <div className="grid gap-12 md:grid-cols-2 md:gap-x-8">
+        <div className="space-y-16">
           {[...chats, ...attached].map((c) => (
             <ChatShot key={c.id} chat={c} />
           ))}
