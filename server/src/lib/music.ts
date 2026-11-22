@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parseFile } from 'music-metadata';
 import type { Server, Socket } from 'socket.io';
 import type { Player } from '../../../shared/types.js';
-import type { MusicCommand, MusicState } from '../../../shared/music.js';
+import { CROSSFADE_SEC, type MusicCommand, type MusicState } from '../../../shared/music.js';
 import { prisma } from './prisma.js';
 
 /* ------------------------------------------------------------------ */
@@ -195,7 +195,9 @@ class MusicSync {
     if (!this.state.playing || !this.state.trackId) return;
     const track = await prisma.track.findUnique({ where: { id: this.state.trackId }, select: { durationSec: true } });
     if (!track?.durationSec) return;
-    const left = (track.durationSec - this.positionNow()) * 1000;
+    // Le titre suivant démarre avant la fin du titre en cours : les téléphones font le fondu enchaîné.
+    const overlap = track.durationSec > CROSSFADE_SEC * 3 ? CROSSFADE_SEC : 0;
+    const left = (track.durationSec - overlap - this.positionNow()) * 1000;
     const version = this.state.version;
     this.endTimer = setTimeout(() => {
       if (this.state.version === version) this.step(1, null, true);

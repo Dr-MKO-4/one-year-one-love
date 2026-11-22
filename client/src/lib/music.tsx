@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { MusicCommand, MusicSnapshot, TrackDTO } from '@shared/music';
+import { CROSSFADE_SEC, MANUAL_FADE_SEC, PAUSE_FADE_SEC, type MusicCommand, type MusicSnapshot, type TrackDTO } from '@shared/music';
 import { PLAYER_NAMES, type Player } from '@shared/types';
 import { api, audioUrl } from '@/services/api';
 import { getSocket } from '@/services/socket';
@@ -7,7 +7,8 @@ import { useToast } from './toast';
 
 /**
  * Lecteur partagé : le serveur détient l'état (titre, lecture, position).
- * Chaque appareil suit cet état ; seuls le volume et la sourdine sont locaux.
+ * Chaque appareil suit cet état avec deux « platines » pour enchaîner les titres en fondu.
+ * Seuls le volume et la sourdine sont locaux.
  */
 interface MusicCtx {
   tracks: TrackDTO[];
@@ -39,6 +40,19 @@ interface MusicCtx {
 const Ctx = createContext<MusicCtx | null>(null);
 const DRIFT_TOLERANCE = 0.75;
 
+/** Une platine : un élément audio et son gain (fondu). */
+interface Deck {
+  el: HTMLAudioElement;
+  gain: GainNode | null;
+  /** Gain logiciel 0..1 (utilisé tant que Web Audio n'est pas disponible). */
+  soft: number;
+  /** Valeur visée par le fondu en cours. */
+  target: number;
+  trackId: string | null;
+  stopTimer: ReturnType<typeof setTimeout> | null;
+  rampTimer: ReturnType<typeof setInterval> | null;
+}
+
 const store = {
   get<T>(key: string, fallback: T): T {
     try {
@@ -59,7 +73,10 @@ const store = {
 
 export function MusicProvider({ children, enabled, me }: { children: ReactNode; enabled: boolean; me: Player | null }) {
   const toast = useToast();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const decksRef = useRef<Deck[]>([]);
+  const activeRef = useRef(0);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterRef = useRef<GainNode | null>(null);
   const [tracks, setTracks] = useState<TrackDTO[]>([]);
   const [shared, setShared] = useState<MusicSnapshot | null>(null);
   const sharedRef = useRef<MusicSnapshot | null>(null);
@@ -70,6 +87,8 @@ export function MusicProvider({ children, enabled, me }: { children: ReactNode; 
   const [volume, setVol] = useState(() => store.get('volume', 0.7));
   const [muted, setMuted] = useState(() => store.get('muted', false));
   const [sheetOpen, setSheetOpen] = useState(false);
+  const levelRef = useRef(muted ? 0 : volume);
+  levelRef.current = muted ? 0 : volume;
   const tracksRef = useRef<TrackDTO[]>([]);
   tracksRef.current = tracks;
 
@@ -77,81 +96,237 @@ export function MusicProvider({ children, enabled, me }: { children: ReactNode; 
     setTracks(await api.tracks().catch(() => []));
   }, []);
 
+  /* ----------------------------- Moteur audio ----------------------------- */
+
+  const applyLevel = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (ctx && masterRef.current) {
+      masterRef.current.gain.setTargetAtTime(levelRef.current, ctx.currentTime, 0.05);
+    } else {
+      for (const d of decksRef.current) d.el.volume = Math.max(0, Math.min(1, levelRef.current * d.soft));
+    }
+  }, []);
+
+  /**
+   * Branche les platines sur Web Audio (au premier toucher : exigence des navigateurs).
+   * Indispensable sur iPhone, où le volume d'un élément audio ne peut pas être modifié.
+   */
+  const ensureGraph = useCallback(() => {
+    let ctx = audioCtxRef.current;
+    if (!ctx) {
+      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return;
+      try {
+        ctx = new AC();
+        const master = ctx.createGain();
+        master.gain.value = levelRef.current;
+        master.connect(ctx.destination);
+        for (const d of decksRef.current) {
+          // Un fondu logiciel en cours se termine à sa valeur cible avant le passage à Web Audio.
+          if (d.rampTimer) clearInterval(d.rampTimer);
+          d.rampTimer = null;
+          d.soft = d.target;
+          const g = ctx.createGain();
+          g.gain.value = d.target;
+          ctx.createMediaElementSource(d.el).connect(g).connect(master);
+          d.gain = g;
+          d.el.volume = 1;
+        }
+        audioCtxRef.current = ctx;
+        masterRef.current = master;
+      } catch {
+        return;
+      }
+    }
+    if (ctx.state !== 'running') ctx.resume().catch(() => undefined);
+  }, []);
+
+  /** Fondu du gain d'une platine vers `to` en `sec` secondes. */
+  const ramp = useCallback((d: Deck, to: number, sec: number) => {
+    if (d.rampTimer) clearInterval(d.rampTimer);
+    d.rampTimer = null;
+    d.target = to;
+    const ctx = audioCtxRef.current;
+    if (ctx && d.gain) {
+      const t = ctx.currentTime;
+      d.gain.gain.cancelScheduledValues(t);
+      d.gain.gain.setValueAtTime(d.gain.gain.value, t);
+      d.gain.gain.linearRampToValueAtTime(to, t + Math.max(sec, 0.01));
+      d.soft = to;
+      return;
+    }
+    const from = d.soft;
+    if (sec <= 0) {
+      d.soft = to;
+      d.el.volume = Math.max(0, Math.min(1, levelRef.current * to));
+      return;
+    }
+    const t0 = performance.now();
+    d.rampTimer = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / (sec * 1000));
+      d.soft = from + (to - from) * k;
+      d.el.volume = Math.max(0, Math.min(1, levelRef.current * d.soft));
+      if (k >= 1 && d.rampTimer) {
+        clearInterval(d.rampTimer);
+        d.rampTimer = null;
+      }
+    }, 40);
+  }, []);
+
+  const stopLater = useCallback((d: Deck, sec: number) => {
+    if (d.stopTimer) clearTimeout(d.stopTimer);
+    d.stopTimer = setTimeout(() => {
+      d.el.pause();
+      d.stopTimer = null;
+    }, sec * 1000 + 60);
+  }, []);
+
+  const cancelStop = (d: Deck) => {
+    if (d.stopTimer) clearTimeout(d.stopTimer);
+    d.stopTimer = null;
+  };
+
+  const playDeck = useCallback((d: Deck) => {
+    d.el
+      .play()
+      .then(() => setBlocked(false))
+      .catch(() => setBlocked(true));
+  }, []);
+
   /** Position cible selon l'état partagé et l'horloge du serveur. */
   const targetPosition = (s: MusicSnapshot) => (s.playing ? s.position + (Date.now() + offsetRef.current - s.anchorAt) / 1000 : s.position);
 
-  /** Aligne l'élément audio local sur l'état partagé. */
-  const apply = useCallback((s: MusicSnapshot) => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (!s.trackId) {
-      a.pause();
-      return;
-    }
-    const src = audioUrl(s.trackId);
-    const align = () => {
+  /** Aligne les platines sur l'état partagé. */
+  const apply = useCallback(
+    (s: MusicSnapshot) => {
+      const decks = decksRef.current;
+      if (decks.length < 2) return;
+      const active = decks[activeRef.current];
+
+      if (!s.trackId) {
+        ramp(active, 0, PAUSE_FADE_SEC);
+        stopLater(active, PAUSE_FADE_SEC);
+        return;
+      }
+
+      // Nouveau titre : fondu enchaîné entre les deux platines.
+      if (active.trackId !== s.trackId) {
+        const wasPlaying = !!active.trackId && !active.el.paused;
+        const fade = wasPlaying ? (s.updatedBy ? MANUAL_FADE_SEC : CROSSFADE_SEC) : 0;
+        const next = decks[1 - activeRef.current];
+        cancelStop(next);
+        next.el.pause();
+        next.trackId = s.trackId;
+        ramp(next, 0, 0);
+        const trackId = s.trackId;
+        const start = () => {
+          const latest = sharedRef.current;
+          if (!latest || latest.trackId !== trackId) return;
+          try {
+            next.el.currentTime = Math.max(0, targetPosition(latest));
+          } catch {
+            /* position appliquée au prochain recalage */
+          }
+          if (latest.playing) {
+            playDeck(next);
+            ramp(next, 1, fade || 0.05);
+          }
+        };
+        next.el.src = audioUrl(trackId);
+        next.el.addEventListener('loadedmetadata', start, { once: true });
+        next.el.load();
+        if (fade > 0) {
+          ramp(active, 0, fade);
+          stopLater(active, fade);
+        } else {
+          active.el.pause();
+        }
+        activeRef.current = 1 - activeRef.current;
+        setProgress(0);
+        return;
+      }
+
+      // Même titre : recalage, lecture ou pause en douceur.
       const target = targetPosition(s);
-      if (Number.isFinite(target) && Math.abs(a.currentTime - target) > DRIFT_TOLERANCE) {
+      if (active.el.readyState >= 1 && Math.abs(active.el.currentTime - target) > DRIFT_TOLERANCE) {
         try {
-          a.currentTime = Math.max(0, target);
+          active.el.currentTime = Math.max(0, target);
         } catch {
           /* métadonnées pas encore chargées */
         }
       }
-      if (s.playing && a.paused) {
-        a.play()
-          .then(() => setBlocked(false))
-          .catch(() => setBlocked(true));
-      } else if (!s.playing && !a.paused) {
-        a.pause();
+      if (s.playing) {
+        if (active.el.paused) {
+          cancelStop(active);
+          ramp(active, 0, 0);
+          playDeck(active);
+          ramp(active, 1, PAUSE_FADE_SEC);
+        } else if (active.stopTimer || active.soft < 1) {
+          // Reprise pendant un fondu de pause : on remonte le son.
+          cancelStop(active);
+          ramp(active, 1, PAUSE_FADE_SEC);
+        }
+      } else if (!active.el.paused && !active.stopTimer) {
+        ramp(active, 0, PAUSE_FADE_SEC);
+        stopLater(active, PAUSE_FADE_SEC);
       }
-    };
-    if (!a.src.endsWith(src)) {
-      a.src = src;
-      a.addEventListener('loadedmetadata', align, { once: true });
-      a.load();
-      if (s.playing) a.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
-    } else {
-      align();
-    }
-  }, []);
+    },
+    [ramp, stopLater, playDeck],
+  );
 
-  // Élément audio unique pour toute l'application.
+  // Deux platines pour toute l'application.
   useEffect(() => {
-    const a = new Audio();
-    a.preload = 'auto';
-    audioRef.current = a;
-    const onTime = () => setProgress(a.currentTime);
-    const onMeta = () => setDuration(a.duration || 0);
-    const onEnded = () => {
-      const s = sharedRef.current;
-      if (s?.trackId) getSocket().emit('music:cmd', { type: 'ended', trackId: s.trackId } satisfies MusicCommand);
+    const make = (): Deck => {
+      const el = new Audio();
+      el.preload = 'auto';
+      return { el, gain: null, soft: 0, target: 0, trackId: null, stopTimer: null, rampTimer: null };
     };
-    a.addEventListener('timeupdate', onTime);
-    a.addEventListener('loadedmetadata', onMeta);
-    a.addEventListener('ended', onEnded);
+    const decks = [make(), make()];
+    decksRef.current = decks;
+    const isActive = (d: Deck) => decksRef.current[activeRef.current] === d;
+    const cleanups = decks.map((d) => {
+      const onTime = () => isActive(d) && setProgress(d.el.currentTime);
+      const onMeta = () => isActive(d) && setDuration(d.el.duration || 0);
+      const onEnded = () => {
+        const s = sharedRef.current;
+        if (isActive(d) && s?.trackId) getSocket().emit('music:cmd', { type: 'ended', trackId: s.trackId } satisfies MusicCommand);
+      };
+      d.el.addEventListener('timeupdate', onTime);
+      d.el.addEventListener('loadedmetadata', onMeta);
+      d.el.addEventListener('ended', onEnded);
+      return () => {
+        d.el.pause();
+        d.el.removeAttribute('src');
+        d.el.removeEventListener('timeupdate', onTime);
+        d.el.removeEventListener('loadedmetadata', onMeta);
+        d.el.removeEventListener('ended', onEnded);
+        if (d.stopTimer) clearTimeout(d.stopTimer);
+        if (d.rampTimer) clearInterval(d.rampTimer);
+      };
+    });
+    // Chaque toucher sur la page (connexion comprise) autorise ou réveille le son.
+    const onGesture = () => ensureGraph();
+    window.addEventListener('pointerdown', onGesture, true);
     return () => {
-      a.pause();
-      a.removeAttribute('src');
-      a.removeEventListener('timeupdate', onTime);
-      a.removeEventListener('loadedmetadata', onMeta);
-      a.removeEventListener('ended', onEnded);
+      cleanups.forEach((c) => c());
+      window.removeEventListener('pointerdown', onGesture, true);
+      audioCtxRef.current?.close().catch(() => undefined);
+      audioCtxRef.current = null;
+      masterRef.current = null;
     };
-  }, []);
+  }, [ensureGraph]);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-      audioRef.current.muted = muted;
-    }
+    applyLevel();
     store.set('volume', volume);
     store.set('muted', muted);
-  }, [volume, muted]);
+  }, [volume, muted, applyLevel]);
 
-  // Abonnement à l'état partagé.
+  /* --------------------------- Synchronisation --------------------------- */
+
   useEffect(() => {
     if (!enabled) {
-      audioRef.current?.pause();
+      decksRef.current.forEach((d) => d.el.pause());
       setTracks([]);
       setShared(null);
       return;
@@ -192,14 +367,18 @@ export function MusicProvider({ children, enabled, me }: { children: ReactNode; 
     return () => clearInterval(t);
   }, [shared?.playing, apply]);
 
-  // Retour au premier plan : on se recale immédiatement.
+  // Retour au premier plan : on réveille le son et on se recale.
   useEffect(() => {
-    const onVisible = () => document.visibilityState === 'visible' && sharedRef.current && apply(sharedRef.current);
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      audioCtxRef.current?.resume().catch(() => undefined);
+      if (sharedRef.current) apply(sharedRef.current);
+    };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [apply]);
 
-  // Premier toucher sur la page : débloque le son si la musique tourne déjà chez l'autre.
+  // Toucher suivant un blocage : on retente la lecture.
   useEffect(() => {
     if (!blocked) return;
     const unlock = () => sharedRef.current && apply(sharedRef.current);
@@ -222,19 +401,27 @@ export function MusicProvider({ children, enabled, me }: { children: ReactNode; 
     volume,
     muted,
     toggle: () => {
-      // Le geste de l'utilisateur sert aussi à autoriser le son sur cet appareil.
-      if (!shared?.playing) audioRef.current?.play().catch(() => undefined);
+      ensureGraph();
       send({ type: shared?.playing ? 'pause' : 'play' });
     },
-    next: () => send({ type: 'next' }),
-    prev: () => send({ type: 'prev' }),
+    next: () => {
+      ensureGraph();
+      send({ type: 'next' });
+    },
+    prev: () => {
+      ensureGraph();
+      send({ type: 'prev' });
+    },
     seek: (t) => send({ type: 'seek', position: t }),
     select: (trackId) => {
-      audioRef.current?.play().catch(() => undefined);
+      ensureGraph();
       send({ type: 'select', trackId });
     },
     toggleShuffle: () => send({ type: 'shuffle' }),
-    unblock: () => sharedRef.current && apply(sharedRef.current),
+    unblock: () => {
+      ensureGraph();
+      if (sharedRef.current) apply(sharedRef.current);
+    },
     setVolume: (v) => setVol(Math.max(0, Math.min(1, v))),
     toggleMute: () => setMuted((m) => !m),
     reload,
